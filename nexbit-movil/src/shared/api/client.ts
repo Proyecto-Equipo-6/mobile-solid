@@ -1,5 +1,4 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api';
-
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
 export class ApiError extends Error {
   constructor(
     message: string,
@@ -48,13 +47,16 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     method: options.method ?? 'GET',
     headers,
     body,
+    credentials: 'include',
   });
 
   if (!response.ok) {
     let message = `La petición falló con estado ${response.status}`;
     try {
-      const data = (await response.json()) as { message?: string };
-      if (data?.message) {
+      const data = (await response.json()) as { error?: string; message?: string };
+      if (data?.error) {
+        message = data.error;
+      } else if (data?.message) {
         message = data.message;
       }
     } catch {
