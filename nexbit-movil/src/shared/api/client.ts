@@ -1,4 +1,19 @@
-const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL ?? 'http://localhost:3000/api/v1';
+import Constants from 'expo-constants';
+
+function resolveApiBaseUrl(): string {
+  const envUrl = process.env.EXPO_PUBLIC_API_URL;
+  if (envUrl) {
+    return envUrl;
+  }
+  const hostUri = Constants.expoConfig?.hostUri;
+  if (hostUri) {
+    const host = hostUri.split(':')[0];
+    return `http://${host}:3000/api/v1`;
+  }
+  return 'http://localhost:3000/api/v1';
+}
+
+const API_BASE_URL = resolveApiBaseUrl();
 export class ApiError extends Error {
   constructor(
     message: string,
