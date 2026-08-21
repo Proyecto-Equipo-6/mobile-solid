@@ -1,9 +1,11 @@
 import { ActivityIndicator, Modal, Pressable, StyleSheet } from 'react-native';
 
 import type { DriverOption } from '@/features/admin-panel/types/admin.types';
+import { Button } from '@/shared/components/button';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { DashColors, Spacing } from '@/shared/constants/theme';
+import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
 type OrderAssigneeModalProps = {
   visible: boolean;
@@ -20,22 +22,38 @@ export function OrderAssigneeModal({
   onSelect,
   onClose,
 }: OrderAssigneeModalProps) {
+  const dash = useDashTheme();
+
+  const availableDrivers = drivers.filter((driver) => driver.available === true);
+
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <ThemedView style={styles.backdrop}>
-        <ThemedView type="backgroundElement" style={styles.modal}>
-          <ThemedText type="subtitle">Asignar repartidor</ThemedText>
+      <ThemedView style={[styles.backdrop, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
+        <ThemedView style={[styles.modal, { backgroundColor: dash.card, borderColor: dash.border }]}>
+          <ThemedText style={styles.titulo}>Asignar repartidor</ThemedText>
 
-          {drivers.map((driver) => (
+          {availableDrivers.length === 0 && (
+            <ThemedText type="small" style={{ color: dash.textSecondary }}>
+              No hay repartidores disponibles.
+            </ThemedText>
+          )}
+
+          {availableDrivers.map((driver) => (
             <Pressable
               key={driver.id}
               onPress={() => onSelect(driver.id)}
               disabled={isAssigning}
               style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView type="backgroundSelected" style={styles.driverRow}>
-                <ThemedText type="smallBold">{driver.name}</ThemedText>
+              <ThemedView
+                style={[
+                  styles.driverRow,
+                  { backgroundColor: dash.cardHover, borderColor: dash.border, borderWidth: 1 },
+                ]}>
+                <ThemedText type="smallBold" style={{ color: dash.text }}>
+                  {driver.name}
+                </ThemedText>
                 {driver.phone && (
-                  <ThemedText type="small" themeColor="textSecondary">
+                  <ThemedText type="small" style={{ color: dash.textMuted }}>
                     {driver.phone}
                   </ThemedText>
                 )}
@@ -43,13 +61,9 @@ export function OrderAssigneeModal({
             </Pressable>
           ))}
 
-          {isAssigning && <ActivityIndicator />}
+          {isAssigning && <ActivityIndicator color={dash.accent} />}
 
-          <Pressable onPress={onClose}>
-            <ThemedText type="small" themeColor="textSecondary">
-              Cancelar
-            </ThemedText>
-          </Pressable>
+          <Button label="Cancelar" variant="secondary" onPress={onClose} />
         </ThemedView>
       </ThemedView>
     </Modal>
@@ -59,18 +73,23 @@ export function OrderAssigneeModal({
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     padding: Spacing.four,
   },
   modal: {
-    borderRadius: Spacing.three,
+    borderRadius: 12,
     padding: Spacing.four,
     gap: Spacing.three,
+    borderWidth: 1,
+  },
+  titulo: {
+    color: DashColors.text,
+    fontSize: 20,
+    fontWeight: '700',
   },
   driverRow: {
     padding: Spacing.three,
-    borderRadius: Spacing.two,
+    borderRadius: 8,
     gap: Spacing.half,
   },
   pressed: {

@@ -3,7 +3,8 @@ import { Pressable, StyleSheet } from 'react-native';
 import type { CartItem as CartItemModel } from '@/features/cart/types/cart.types';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { Radius, Spacing } from '@/shared/constants/theme';
+import { useTheme } from '@/shared/hooks/use-theme';
 import { formatCurrency } from '@/shared/utils/format';
 
 type CartItemProps = {
@@ -13,6 +14,8 @@ type CartItemProps = {
 };
 
 export function CartItem({ item, onRemove, onChangeQuantity }: CartItemProps) {
+  const theme = useTheme();
+
   return (
     <ThemedView type="backgroundElement" style={styles.row}>
       <ThemedView style={styles.info}>
@@ -22,7 +25,7 @@ export function CartItem({ item, onRemove, onChangeQuantity }: CartItemProps) {
         </ThemedText>
       </ThemedView>
 
-      <ThemedView type="backgroundSelected" style={styles.stepper}>
+      <ThemedView style={[styles.stepper, { borderColor: theme.border, borderWidth: 1 }]}>
         <Pressable onPress={() => onChangeQuantity(item.quantity - 1)} style={styles.stepButton}>
           <ThemedText type="smallBold">-</ThemedText>
         </Pressable>
@@ -32,7 +35,9 @@ export function CartItem({ item, onRemove, onChangeQuantity }: CartItemProps) {
         </Pressable>
       </ThemedView>
 
-      <ThemedText type="smallBold">{formatCurrency(item.price * item.quantity)}</ThemedText>
+      <ThemedText type="smallBold" style={{ color: theme.accent }}>
+        {formatCurrency(item.price * item.quantity)}
+      </ThemedText>
 
       <Pressable onPress={onRemove}>
         <ThemedText type="small" themeColor="textSecondary">
@@ -49,7 +54,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
   },
   info: {
     flex: 1,
@@ -58,7 +63,7 @@ const styles = StyleSheet.create({
   stepper: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderRadius: Spacing.two,
+    borderRadius: Radius.control,
     overflow: 'hidden',
   },
   stepButton: {

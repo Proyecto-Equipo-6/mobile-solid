@@ -1,18 +1,24 @@
 import { Link, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, TextInput } from 'react-native';
+import { Pressable, ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import type { TipoDocumento } from '@/features/auth/types/auth.types';
+import { Alert } from '@/shared/components/alert';
+import { BrandMark } from '@/shared/components/brand-mark';
+import { Button } from '@/shared/components/button';
+import { Field } from '@/shared/components/field';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { Brand, Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 
 const TIPOS_DOCUMENTO: TipoDocumento[] = ['CC', 'Pasaporte', 'CE', 'Otro'];
 
 export default function RegisterScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const theme = useTheme();
   const { register } = useAuth();
   const [nombreApellido, setNombreApellido] = useState('');
@@ -49,129 +55,147 @@ export default function RegisterScreen() {
     }
   }
 
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.backgroundElement }];
-
   return (
-    <ScrollView contentContainerStyle={styles.scrollContent}>
-      <ThemedView style={styles.container}>
-        <ThemedView style={styles.header}>
-          <ThemedText type="title">Registro</ThemedText>
-          <ThemedText themeColor="textSecondary">Crea tu cuenta de cliente</ThemedText>
-        </ThemedView>
+    <ThemedView style={[styles.auth, { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + Spacing.four }]}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <ThemedView style={styles.card}>
+          <BrandMark size="large" showName={false} style={styles.logo} />
 
-        <TextInput
-          value={nombreApellido}
-          onChangeText={setNombreApellido}
-          placeholder="Nombre y apellido"
-          placeholderTextColor={theme.textSecondary}
-          style={inputStyle}
-        />
-
-        <ThemedText type="small" themeColor="textSecondary">
-          Tipo de documento
-        </ThemedText>
-        <ThemedView style={styles.chipRow}>
-          {TIPOS_DOCUMENTO.map((tipo) => {
-            const selected = tipoDocumento === tipo;
-            return (
-              <Pressable key={tipo} onPress={() => setTipoDocumento(tipo)}>
-                <ThemedView type={selected ? 'backgroundSelected' : 'backgroundElement'} style={styles.chip}>
-                  <ThemedText type="smallBold">{tipo}</ThemedText>
-                </ThemedView>
-              </Pressable>
-            );
-          })}
-        </ThemedView>
-
-        <TextInput
-          value={numeroDocumento}
-          onChangeText={setNumeroDocumento}
-          placeholder="Número de documento"
-          placeholderTextColor={theme.textSecondary}
-          keyboardType="numeric"
-          style={inputStyle}
-        />
-        <TextInput
-          value={email}
-          onChangeText={setEmail}
-          placeholder="Correo electrónico"
-          placeholderTextColor={theme.textSecondary}
-          autoCapitalize="none"
-          keyboardType="email-address"
-          style={inputStyle}
-        />
-        <TextInput
-          value={telefono}
-          onChangeText={setTelefono}
-          placeholder="Teléfono (10 dígitos)"
-          placeholderTextColor={theme.textSecondary}
-          keyboardType="phone-pad"
-          maxLength={10}
-          style={inputStyle}
-        />
-        <TextInput
-          value={direccion}
-          onChangeText={setDireccion}
-          placeholder="Dirección"
-          placeholderTextColor={theme.textSecondary}
-          style={inputStyle}
-        />
-        <TextInput
-          value={password}
-          onChangeText={setPassword}
-          placeholder="Contraseña (4 a 8 caracteres)"
-          placeholderTextColor={theme.textSecondary}
-          secureTextEntry
-          maxLength={8}
-          style={inputStyle}
-        />
-
-        {error && (
-          <ThemedText type="small" themeColor="textSecondary">
-            {error}
+          <ThemedText type="title" style={styles.titulo}>
+            Crear cuenta
           </ThemedText>
-        )}
+          <ThemedText type="small" themeColor="textSecondary" style={styles.subtitulo}>
+            Únete a {Brand.nombre} y comienza a realizar pedidos
+          </ThemedText>
 
-        <Pressable onPress={handleSubmit} disabled={submitting} style={styles.submit}>
-          {submitting ? (
-            <ActivityIndicator color="#ffffff" />
-          ) : (
-            <ThemedText type="smallBold" style={styles.submitText}>
-              Crear cuenta
-            </ThemedText>
-          )}
-        </Pressable>
+          {error && <Alert variant="error">{error}</Alert>}
 
-        <Link href="/login">
-          <ThemedText type="link">¿Ya tienes cuenta? Inicia sesión</ThemedText>
-        </Link>
-      </ThemedView>
-    </ScrollView>
+          <Field
+            label="Nombre y apellido"
+            value={nombreApellido}
+            onChangeText={setNombreApellido}
+            placeholder="Ej: Juan Pérez"
+            required
+          />
+
+          <ThemedText type="smallBold" style={styles.campoEtiqueta}>
+            Tipo de documento
+            <ThemedText themeColor="error"> *</ThemedText>
+          </ThemedText>
+          <ThemedView style={styles.chipRow}>
+            {TIPOS_DOCUMENTO.map((tipo) => {
+              const selected = tipoDocumento === tipo;
+              return (
+                <Pressable key={tipo} onPress={() => setTipoDocumento(tipo)}>
+                  <ThemedView
+                    style={[styles.chip, { backgroundColor: selected ? theme.accent : theme.backgroundElement, borderWidth: 1, borderColor: selected ? theme.accent : theme.border }]}>
+                    <ThemedText type="smallBold" style={{ color: selected ? theme.sobreAccent : theme.text }}>
+                      {tipo}
+                    </ThemedText>
+                  </ThemedView>
+                </Pressable>
+              );
+            })}
+          </ThemedView>
+
+          <Field
+            label="Número de documento"
+            value={numeroDocumento}
+            onChangeText={setNumeroDocumento}
+            placeholder="Ej: 1010123456"
+            keyboardType="numeric"
+            required
+          />
+          <Field
+            label="Correo electrónico"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="ejemplo@correo.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            required
+          />
+          <Field
+            label="Teléfono"
+            value={telefono}
+            onChangeText={setTelefono}
+            placeholder="Ej: 3001234567"
+            keyboardType="phone-pad"
+            maxLength={10}
+            required
+          />
+          <Field
+            label="Dirección"
+            value={direccion}
+            onChangeText={setDireccion}
+            placeholder="Ej: Calle 10 # 5-20, Medellín"
+            required
+          />
+          <Field
+            label="Contraseña"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Entre 4 y 8 caracteres"
+            secureTextEntry
+            maxLength={8}
+            required
+          />
+
+          <Button label="Crear cuenta" fullWidth loading={submitting} onPress={handleSubmit} />
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.ingresar}>
+            ¿Ya tienes una cuenta?{' '}
+            <Link href="/login">
+              <ThemedText type="link" themeColor="text">
+                Inicia sesión
+              </ThemedText>
+            </Link>
+          </ThemedText>
+        </ThemedView>
+      </ScrollView>
+    </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  scrollContent: {
+  auth: {
+    flex: 1,
+    backgroundColor: '#f5f5f6',
+  },
+  scroll: {
     flexGrow: 1,
     justifyContent: 'center',
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: Spacing.four,
-    gap: Spacing.two,
-  },
-  header: {
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginBottom: Spacing.three,
-  },
-  input: {
-    borderWidth: 1,
-    borderRadius: Spacing.two,
     paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    fontSize: 16,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 540,
+    alignSelf: 'center',
+    padding: Spacing.four,
+    gap: Spacing.three,
+    backgroundColor: '#ffffff',
+    borderWidth: 1,
+    borderColor: '#e6e6e8',
+    borderRadius: Radius.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 6,
+  },
+  logo: {
+    alignSelf: 'center',
+    marginBottom: Spacing.one,
+  },
+  titulo: {
+    textAlign: 'center',
+  },
+  subtitulo: {
+    textAlign: 'center',
+    marginBottom: Spacing.two,
+  },
+  campoEtiqueta: {
+    fontSize: 13,
   },
   chipRow: {
     flexDirection: 'row',
@@ -181,16 +205,9 @@ const styles = StyleSheet.create({
   chip: {
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    borderRadius: Spacing.five,
+    borderRadius: Radius.pill,
   },
-  submit: {
-    backgroundColor: '#208AEF',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-    marginTop: Spacing.three,
-  },
-  submitText: {
-    color: '#ffffff',
+  ingresar: {
+    textAlign: 'center',
   },
 });

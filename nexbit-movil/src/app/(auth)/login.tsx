@@ -1,17 +1,22 @@
-import { Link, useRouter } from 'expo-router';
+import { Link } from 'expo-router';
 import { useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import { ScrollView, StyleSheet } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { Alert } from '@/shared/components/alert';
+import { BrandMark } from '@/shared/components/brand-mark';
+import { Button } from '@/shared/components/button';
+import { Field } from '@/shared/components/field';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { Brand, Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 
 export default function LoginScreen() {
-  const router = useRouter();
-  const theme = useTheme();
+  const insets = useSafeAreaInsets();
   const { signIn } = useAuth();
+  const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
@@ -25,7 +30,7 @@ export default function LoginScreen() {
     setSubmitting(true);
     try {
       await signIn(email, password);
-      router.replace('/');
+      // El AuthLayout maneja el redirect automático según el rol
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo iniciar sesión');
     } finally {
@@ -33,83 +38,91 @@ export default function LoginScreen() {
     }
   }
 
-  const inputStyle = [styles.input, { color: theme.text, borderColor: theme.backgroundElement }];
-
   return (
-    <ThemedView style={styles.container}>
-      <ThemedView style={styles.header}>
-        <ThemedText type="title">Nexbit</ThemedText>
-        <ThemedText themeColor="textSecondary">Inicia sesión para continuar</ThemedText>
-      </ThemedView>
+    <ThemedView style={[styles.auth, { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + Spacing.four }]}>
+      <ScrollView contentContainerStyle={styles.scroll}>
+        <ThemedView style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }]}>
+          <BrandMark size="large" showName={false} style={styles.logo} />
 
-      <TextInput
-        value={email}
-        onChangeText={setEmail}
-        placeholder="Correo electrónico"
-        placeholderTextColor={theme.textSecondary}
-        autoCapitalize="none"
-        keyboardType="email-address"
-        style={inputStyle}
-      />
-      <TextInput
-        value={password}
-        onChangeText={setPassword}
-        placeholder="Contraseña"
-        placeholderTextColor={theme.textSecondary}
-        secureTextEntry
-        style={inputStyle}
-      />
-
-      {error && (
-        <ThemedText type="small" themeColor="textSecondary">
-          {error}
-        </ThemedText>
-      )}
-
-      <Pressable onPress={handleSubmit} disabled={submitting} style={styles.submit}>
-        {submitting ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <ThemedText type="smallBold" style={styles.submitText}>
-            Ingresar
+          <ThemedText type="title" style={styles.titulo}>
+            Iniciar sesión
           </ThemedText>
-        )}
-      </Pressable>
+          <ThemedText type="small" themeColor="textSecondary" style={styles.subtitulo}>
+            Bienvenido de nuevo a {Brand.nombre}
+          </ThemedText>
 
-      <Link href="/register">
-        <ThemedText type="link">¿No tienes cuenta? Regístrate</ThemedText>
-      </Link>
+          {error && <Alert variant="error">{error}</Alert>}
+
+          <Field
+            label="Correo electrónico"
+            value={email}
+            onChangeText={setEmail}
+            placeholder="tu@correo.com"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            required
+          />
+          <Field
+            label="Contraseña"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Entre 4 y 8 caracteres"
+            secureTextEntry
+            required
+          />
+
+          <Button label="Iniciar sesión" fullWidth loading={submitting} onPress={handleSubmit} />
+
+          <ThemedText type="small" themeColor="textSecondary" style={styles.registrate}>
+            ¿No tienes una cuenta?{' '}
+            <Link href="/register">
+              <ThemedText type="link" themeColor="text">
+                Regístrate
+              </ThemedText>
+            </Link>
+          </ThemedText>
+        </ThemedView>
+      </ScrollView>
     </ThemedView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  auth: {
     flex: 1,
+    backgroundColor: 'transparent',
+  },
+  scroll: {
+    flexGrow: 1,
     justifyContent: 'center',
+    paddingHorizontal: Spacing.three,
+  },
+  card: {
+    width: '100%',
+    maxWidth: 450,
+    alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.three,
-  },
-  header: {
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginBottom: Spacing.four,
-  },
-  input: {
     borderWidth: 1,
-    borderRadius: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.three,
-    fontSize: 16,
+    borderRadius: Radius.card,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.1,
+    shadowRadius: 24,
+    elevation: 6,
   },
-  submit: {
-    backgroundColor: '#208AEF',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-    marginTop: Spacing.two,
+  logo: {
+    alignSelf: 'center',
+    marginBottom: Spacing.one,
   },
-  submitText: {
-    color: '#ffffff',
+  titulo: {
+    textAlign: 'center',
+  },
+  subtitulo: {
+    textAlign: 'center',
+    marginBottom: Spacing.two,
+  },
+  registrate: {
+    textAlign: 'center',
   },
 });

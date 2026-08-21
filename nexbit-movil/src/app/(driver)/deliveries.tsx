@@ -1,82 +1,103 @@
 import { useState } from 'react';
 import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
 
-import { CashCollectModal } from '@/features/delivery/components/CashCollectModal';
+import { ConfirmDeliveryModal } from '@/features/delivery/components/ConfirmDeliveryModal';
 import { DeliveryOrderCard } from '@/features/delivery/components/DeliveryOrderCard';
 import { useDriverOrders } from '@/features/delivery/hooks/useDriverOrders';
+import type { DeliveryOrder } from '@/features/delivery/types/delivery.types';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { DashColors, Spacing } from '@/shared/constants/theme';
+import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
 export default function DeliveriesScreen() {
-  const { orders, isLoading, error, acceptOrder, collectOrder, reload } = useDriverOrders();
-  const [collectingOrderId, setCollectingOrderId] = useState<string | null>(null);
-  const [collectingTotal, setCollectingTotal] = useState(0);
-  const [isCollecting, setIsCollecting] = useState(false);
+  const dash = useDashTheme();
+  const { dashboard, isLoading, error, startDelivery, reload } = useDriverOrders();
+  const [startingOrderId, setStartingOrderId] = useState<string | null>(null);
+  const [activeOrder, setActiveOrder] = useState<DeliveryOrder | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   if (isLoading) {
     return (
-      <ThemedView style={styles.centered}>
-        <ActivityIndicator />
+      <ThemedView style={[styles.centered, { backgroundColor: dash.bg }]}>
+        <ActivityIndicator color={dash.accent} />
       </ThemedView>
     );
   }
 
   if (error) {
     return (
-      <ThemedView style={styles.centered}>
-        <ThemedText themeColor="textSecondary">{error}</ThemedText>
+      <ThemedView style={[styles.centered, { backgroundColor: dash.bg }]}>
+        <ThemedText style={styles.errorTexto}>{error}</ThemedText>
         <Pressable onPress={reload}>
-          <ThemedText type="link">Reintentar</ThemedText>
+          <ThemedText style={styles.enlace}>Reintentar</ThemedText>
         </Pressable>
       </ThemedView>
     );
   }
 
-  function openCollectModal(orderId: string, cashToCollect: number) {
-    setCollectingOrderId(orderId);
-    setCollectingTotal(cashToCollect);
-  }
+  const queue = (dashboard?.pedidosEnCola ?? []).filter((item) => item.id !== activeOrder?.id);
+  const totalDia = dashboard?.conteoDelDia ?? 0;
+  const pendientes = queue.length + (activeOrder ? 1 : 0);
 
-  async function handleCollect(amountCollected: number) {
-    if (collectingOrderId === null) {
+  async function handleStart(order: DeliveryOrder) {
+    if (startingOrderId !== null || activeOrder) {
       return;
     }
-    setIsCollecting(true);
+    setStartingOrderId(order.id);
     try {
-      await collectOrder(collectingOrderId, amountCollected);
+      await startDelivery(order.id);
+      setActiveOrder({ ...order, status: 'in_transit', estadoRaw: 'EN_CAMINO' });
     } finally {
-      setIsCollecting(false);
-      setCollectingOrderId(null);
+      setStartingOrderId(null);
     }
+  }
+
+  function handleDone() {
+    setModalVisible(false);
+    setActiveOrder(null);
+    reload();
   }
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor: dash.bg }]}>
+      <ThemedView style={styles.cabecera}>
+        <ThemedText style={styles.titulo}>Entregas de hoy</ThemedText>
+        <ThemedText style={styles.subtitulo}>
+          {pendientes} en curso de {totalDia} asignados · avanza cada entrega paso a paso.
+        </ThemedText>
+      </ThemedView>
+
       <FlatList
-        data={orders}
+        data={activeOrder ? [activeOrder, ...queue] : queue}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <DeliveryOrderCard
-            order={item}
-            onAccept={() => acceptOrder(item.id)}
-            onCollect={() => openCollectModal(item.id, item.cashToCollect)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const isActive = item.id === activeOrder?.id;
+          return (
+            <DeliveryOrderCard
+              order={item}
+              isStarting={!isActive && startingOrderId === item.id}
+              onStart={isActive ? undefined : () => handleStart(item)}
+              onConfirm={isActive ? () => setModalVisible(true) : undefined}
+              onNotDelivered={isActive ? () => setModalVisible(true) : undefined}
+            />
+          );
+        }}
         ListEmptyComponent={
           <ThemedView style={styles.centered}>
-            <ThemedText themeColor="textSecondary">No hay entregas pendientes.</ThemedText>
+            <ThemedText style={{ color: dash.textSecondary }}>
+              No tienes pedidos asignados por el momento.
+            </ThemedText>
           </ThemedView>
         }
       />
 
-      <CashCollectModal
-        visible={collectingOrderId !== null}
-        orderTotal={collectingTotal}
-        isSubmitting={isCollecting}
-        onConfirm={handleCollect}
-        onClose={() => setCollectingOrderId(null)}
+      <ConfirmDeliveryModal
+        visible={modalVisible}
+        order={activeOrder}
+        onClose={() => setModalVisible(false)}
+        onDone={handleDone}
       />
     </ThemedView>
   );
@@ -93,8 +114,29 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
     padding: Spacing.four,
   },
+  errorTexto: {
+    color: DashColors.textSecondary,
+  },
+  enlace: {
+    color: DashColors.accent,
+    fontWeight: '600',
+  },
+  cabecera: {
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
+  titulo: {
+    color: DashColors.text,
+    fontSize: 22,
+    fontWeight: '700',
+  },
+  subtitulo: {
+    color: DashColors.textSecondary,
+    fontSize: 14,
+  },
   listContent: {
     gap: Spacing.two,
     padding: Spacing.three,
+    paddingTop: Spacing.one,
   },
 });

@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import * as adminService from '@/features/admin-panel/services/admin.service';
-import type { AdminOrder, DriverOption, InventorySummary } from '@/features/admin-panel/types/admin.types';
+import type {
+  AdminOrder,
+  DriverOption,
+  InventorySummary,
+} from '@/features/admin-panel/types/admin.types';
 import type { CreateProductPayload, Product, UpdateProductPayload } from '@/features/catalog/types/catalog.types';
+
+function kpiValue(kpis: { id: string; valor: number }[], id: string): number {
+  return kpis.find((kpi) => kpi.id === id)?.valor ?? 0;
+}
 
 export function useAdminInventory() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -15,13 +23,18 @@ export function useAdminInventory() {
     let cancelled = false;
     (async () => {
       try {
-        const [productsData, summaryData] = await Promise.all([
+        const [productsData, analytics] = await Promise.all([
           adminService.listProducts(),
-          adminService.getInventorySummary(),
+          adminService.getAnalyticsSummary(),
         ]);
         if (!cancelled) {
           setProducts(productsData);
-          setSummary(summaryData);
+          setSummary({
+            totalProducts: kpiValue(analytics.kpis, 'productos'),
+            unavailableProducts: productsData.filter((product) => !product.available).length,
+            totalOrders: kpiValue(analytics.kpis, 'pedidos'),
+            totalSales: kpiValue(analytics.kpis, 'ventas'),
+          });
           setError(null);
         }
       } catch (e) {
@@ -47,6 +60,17 @@ export function useAdminInventory() {
   const addProduct = useCallback(async (payload: CreateProductPayload) => {
     const product = await adminService.createProduct(payload);
     setProducts((current) => [product, ...current]);
+    setSummary((current) =>
+      current
+        ? {
+            ...current,
+            totalProducts: current.totalProducts + 1,
+            unavailableProducts: product.available
+              ? current.unavailableProducts
+              : current.unavailableProducts + 1,
+          }
+        : current,
+    );
     return product;
   }, []);
 
@@ -57,9 +81,23 @@ export function useAdminInventory() {
   }, []);
 
   const removeProduct = useCallback(async (id: string) => {
+    const removed = products.find((product) => product.id === id);
     await adminService.deleteProduct(id);
     setProducts((current) => current.filter((item) => item.id !== id));
-  }, []);
+    if (removed) {
+      setSummary((current) =>
+        current
+          ? {
+              ...current,
+              totalProducts: Math.max(0, current.totalProducts - 1),
+              unavailableProducts: removed.available
+                ? current.unavailableProducts
+                : Math.max(0, current.unavailableProducts - 1),
+            }
+          : current,
+      );
+    }
+  }, [products]);
 
   return {
     products,
@@ -114,9 +152,14 @@ export function useAdminOrders() {
   }, []);
 
   const assignOrder = useCallback(async (orderId: string, driverId: string) => {
-    const order = await adminService.assignOrder({ orderId, driverId });
+    const order = await adminService.assignOrder(orderId, driverId);
     setOrders((current) => current.map((item) => (item.id === orderId ? { ...item, ...order } : item)));
   }, []);
 
-  return { orders, drivers, isLoading, error, assignOrder, reload };
+  const confirmOrder = useCallback(async (orderId: string) => {
+    const order = await adminService.updateOrderStatus(orderId, 'CONFIRMADO');
+    setOrders((current) => current.map((item) => (item.id === orderId ? { ...item, ...order } : item)));
+  }, []);
+
+  return { orders, drivers, isLoading, error, assignOrder, confirmOrder, reload };
 }

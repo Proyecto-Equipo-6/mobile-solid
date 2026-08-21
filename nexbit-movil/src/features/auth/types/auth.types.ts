@@ -5,12 +5,18 @@ export type User = {
   name: string;
   email: string;
   phone?: string;
+  direccion?: string;
   role: Role;
 };
 
 export type LoginCredentials = {
   email: string;
   password: string;
+};
+
+export type LoginResponse = {
+  token: string;
+  usuario: BackendUsuario;
 };
 
 export type TipoDocumento = 'CC' | 'Pasaporte' | 'CE' | 'Otro';
@@ -50,12 +56,13 @@ export function mapUsuarioToUser(usuario: BackendUsuario): User {
     name: usuario.nombre_apellido,
     email: usuario.email,
     phone: usuario.telefono,
+    direccion: usuario.direccion,
     role: ROL_ID_A_ROLE[Number(usuario.id_rol)] ?? 'client',
   };
 }
 
-export const ROLE_HOME: Record<Role, string> = {
+export const ROLE_HOME = {
   client: '/home',
   admin: '/products',
   driver: '/deliveries',
-};
+} as const satisfies Record<Role, string>;

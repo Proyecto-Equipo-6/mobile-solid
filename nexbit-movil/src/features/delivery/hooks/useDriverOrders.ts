@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import * as deliveryService from '@/features/delivery/services/delivery.service';
-import type { DeliveryOrder } from '@/features/delivery/types/delivery.types';
+import type { DriverDashboard } from '@/features/delivery/types/delivery.types';
+import type { PickedImage } from '@/shared/utils/imagePicker';
 
 export function useDriverOrders() {
-  const [orders, setOrders] = useState<DeliveryOrder[]>([]);
+  const [dashboard, setDashboard] = useState<DriverDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [reloadKey, setReloadKey] = useState(0);
@@ -13,9 +14,9 @@ export function useDriverOrders() {
     let cancelled = false;
     (async () => {
       try {
-        const data = await deliveryService.listDriverOrders();
+        const data = await deliveryService.getDashboard();
         if (!cancelled) {
-          setOrders(data);
+          setDashboard(data);
           setError(null);
         }
       } catch (e) {
@@ -38,22 +39,33 @@ export function useDriverOrders() {
     setReloadKey((key) => key + 1);
   }, []);
 
-  const acceptOrder = useCallback(async (orderId: string) => {
-    const updated = await deliveryService.acceptDelivery(orderId);
-    setOrders((current) => current.map((order) => (order.id === orderId ? updated : order)));
+  const startDelivery = useCallback(async (orderId: string) => {
+    await deliveryService.updateDeliveryStatus(orderId, 'EN_CAMINO', 'ASIGNADO');
+    setReloadKey((key) => key + 1);
   }, []);
 
-  const collectOrder = useCallback(
-    async (orderId: string, amountCollected: number) => {
-      const updated = await deliveryService.registerCashCollection({
-        orderId,
-        amountCollected,
-        collectedAt: new Date().toISOString(),
-      });
-      setOrders((current) => current.map((order) => (order.id === orderId ? updated : order)));
-    },
-    [],
-  );
+  const uploadComprobante = useCallback(async (orderId: string, imagen: PickedImage): Promise<string> => {
+    return await deliveryService.subirComprobante(orderId, imagen);
+  }, []);
 
-  return { orders, isLoading, error, acceptOrder, collectOrder, reload };
+  const deliverOrder = useCallback(async (orderId: string, comprobanteUrl: string) => {
+    await deliveryService.entregarPedido(orderId, comprobanteUrl);
+    setReloadKey((key) => key + 1);
+  }, []);
+
+  const markNotDelivered = useCallback(async (orderId: string, observacion: string) => {
+    await deliveryService.marcarNoEntregado(orderId, observacion);
+    setReloadKey((key) => key + 1);
+  }, []);
+
+  return {
+    dashboard,
+    isLoading,
+    error,
+    startDelivery,
+    uploadComprobante,
+    deliverOrder,
+    markNotDelivered,
+    reload,
+  };
 }

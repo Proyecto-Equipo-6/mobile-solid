@@ -1,15 +1,28 @@
 import { api } from '@/shared/api/client';
 
-import type { CreateOrderPayload, Order } from '@/features/cart/types/cart.types';
+import { sincronizarCarrito } from '@/features/cart/services/cart.service';
+import type {
+  BackendPedido,
+  CartItem,
+  CreateOrderPayload,
+  Order,
+} from '@/features/cart/types/cart.types';
+import { mapPedidoToOrder } from '@/features/cart/types/cart.types';
 
-export async function createOrder(payload: CreateOrderPayload): Promise<Order> {
-  return api.post<Order>('/orders', payload);
+export async function createOrder(
+  payload: CreateOrderPayload,
+  items: CartItem[],
+): Promise<Order> {
+  await sincronizarCarrito(items);
+  const data = await api.post<{ mensaje: string; pedido: BackendPedido }>('/pedidos', {
+    direccionEntrega: payload.direccionEntrega,
+    observaciones: payload.observaciones ?? '',
+    idMetodoPago: payload.idMetodoPago,
+  });
+  return mapPedidoToOrder(data.pedido);
 }
 
 export async function listMyOrders(): Promise<Order[]> {
-  return api.get<Order[]>('/orders');
-}
-
-export async function getOrder(id: string): Promise<Order> {
-  return api.get<Order>(`/orders/${id}`);
+  const data = await api.get<{ pedidos: BackendPedido[]; vacio: boolean }>('/pedidos');
+  return (data.pedidos ?? []).map(mapPedidoToOrder);
 }

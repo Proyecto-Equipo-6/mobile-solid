@@ -1,9 +1,11 @@
-import { ActivityIndicator, Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import type { CartTotals } from '@/features/cart/types/cart.types';
+import { Button } from '@/shared/components/button';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { Radius, Spacing } from '@/shared/constants/theme';
+import { useTheme } from '@/shared/hooks/use-theme';
 import { formatCurrency } from '@/shared/utils/format';
 
 type CheckoutSummaryProps = {
@@ -13,21 +15,16 @@ type CheckoutSummaryProps = {
 };
 
 export function CheckoutSummary({ totals, isSubmitting, onCheckout }: CheckoutSummaryProps) {
+  const theme = useTheme();
+
   return (
-    <ThemedView type="backgroundElement" style={styles.container}>
+    <ThemedView type="backgroundElement" style={[styles.container, { borderColor: theme.border, borderWidth: 1 }]}>
       <SummaryRow label="Subtotal" value={formatCurrency(totals.subtotal)} />
       <SummaryRow label="Domicilio" value={formatCurrency(totals.deliveryFee)} />
+      <ThemedView style={[styles.divider, { backgroundColor: theme.border }]} />
       <SummaryRow label="Total" value={formatCurrency(totals.total)} strong />
 
-      <Pressable onPress={onCheckout} disabled={isSubmitting} style={styles.button}>
-        {isSubmitting ? (
-          <ActivityIndicator color="#ffffff" />
-        ) : (
-          <ThemedText type="smallBold" style={styles.buttonText}>
-            Pedir contra entrega
-          </ThemedText>
-        )}
-      </Pressable>
+      <Button label="Pedir contra entrega" fullWidth loading={isSubmitting} onPress={onCheckout} />
     </ThemedView>
   );
 }
@@ -47,20 +44,14 @@ const styles = StyleSheet.create({
   container: {
     gap: Spacing.two,
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: Radius.card,
   },
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  button: {
-    marginTop: Spacing.two,
-    backgroundColor: '#208AEF',
-    paddingVertical: Spacing.three,
-    borderRadius: Spacing.two,
-    alignItems: 'center',
-  },
-  buttonText: {
-    color: '#ffffff',
+  divider: {
+    height: 1,
+    alignSelf: 'stretch',
   },
 });

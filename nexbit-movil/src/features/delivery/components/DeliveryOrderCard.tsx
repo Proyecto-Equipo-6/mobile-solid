@@ -1,58 +1,79 @@
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import type { DeliveryOrder } from '@/features/delivery/types/delivery.types';
+import { Button } from '@/shared/components/button';
+import { Pill, STATUS_COLORS, STATUS_LABELS } from '@/shared/components/pill';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Spacing } from '@/shared/constants/theme';
+import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { formatCurrency, formatDateTime } from '@/shared/utils/format';
 
 type DeliveryOrderCardProps = {
   order: DeliveryOrder;
-  onAccept: () => void;
-  onCollect: () => void;
+  isStarting?: boolean;
+  onStart?: () => void;
+  onConfirm?: () => void;
+  onNotDelivered?: () => void;
 };
 
-export function DeliveryOrderCard({ order, onAccept, onCollect }: DeliveryOrderCardProps) {
-  const isPending = order.status === 'assigned';
+export function DeliveryOrderCard({
+  order,
+  isStarting,
+  onStart,
+  onConfirm,
+  onNotDelivered,
+}: DeliveryOrderCardProps) {
+  const dash = useDashTheme();
+  const isAssigned = order.status === 'assigned';
   const isInTransit = order.status === 'in_transit';
 
   return (
-    <ThemedView type="backgroundElement" style={styles.card}>
+    <ThemedView style={[styles.card, { backgroundColor: dash.card, borderColor: dash.border }]}>
       <ThemedView style={styles.header}>
-        <ThemedText type="smallBold">{order.customerName}</ThemedText>
-        <ThemedText type="small" themeColor="textSecondary">
-          {formatDateTime(order.createdAt)}
-        </ThemedText>
+        <ThemedView style={styles.headerInfo}>
+          <ThemedText type="smallBold" style={{ color: dash.text }}>
+            {order.customerName}
+          </ThemedText>
+          <ThemedText type="small" style={{ color: dash.textSecondary }}>
+            {formatDateTime(order.createdAt)}
+          </ThemedText>
+        </ThemedView>
+        <Pill
+          label={STATUS_LABELS[order.status] ?? order.status}
+          color={STATUS_COLORS[order.status]}
+        />
       </ThemedView>
 
-      <ThemedText type="small" themeColor="textSecondary">
-        {order.deliveryAddress.address}, {order.deliveryAddress.city}
+      <ThemedText type="small" style={{ color: dash.textSecondary }}>
+        {order.address}
       </ThemedText>
+      {order.customerPhone ? (
+        <ThemedText type="small" style={{ color: dash.textSecondary }}>
+          {order.customerPhone}
+        </ThemedText>
+      ) : null}
 
       <ThemedView style={styles.footer}>
-        <ThemedText type="smallBold">Recaudo: {formatCurrency(order.cashToCollect)}</ThemedText>
-
-        {isPending && (
-          <Pressable onPress={onAccept} style={styles.button}>
-            <ThemedText type="smallBold" style={styles.buttonText}>
-              Aceptar entrega
-            </ThemedText>
-          </Pressable>
-        )}
-
-        {isInTransit && (
-          <Pressable onPress={onCollect} style={styles.button}>
-            <ThemedText type="smallBold" style={styles.buttonText}>
-              Registrar recaudo
-            </ThemedText>
-          </Pressable>
-        )}
-
-        {order.status === 'delivered' && (
-          <ThemedText type="small" themeColor="textSecondary">
-            Entregado
+        <ThemedView style={styles.recaudo}>
+          <ThemedText type="small" style={{ color: dash.textMuted }}>
+            Total a cobrar
           </ThemedText>
-        )}
+          <ThemedText type="smallBold" style={{ color: dash.text }}>
+            {formatCurrency(order.total)}
+          </ThemedText>
+        </ThemedView>
+
+        {isAssigned && onStart ? (
+          <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
+        ) : null}
+
+        {isInTransit ? (
+          <ThemedView style={styles.acciones}>
+            <Button label="No entregado" variant="secondary" pill onPress={onNotDelivered} />
+            <Button label="Confirmar entrega" pill onPress={onConfirm} />
+          </ThemedView>
+        ) : null}
       </ThemedView>
     </ThemedView>
   );
@@ -60,26 +81,33 @@ export function DeliveryOrderCard({ order, onAccept, onCollect }: DeliveryOrderC
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: Spacing.three,
+    borderRadius: 12,
     padding: Spacing.three,
     gap: Spacing.two,
+    borderWidth: 1,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  headerInfo: {
+    flex: 1,
+    gap: Spacing.half,
   },
   footer: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginTop: Spacing.one,
+    gap: Spacing.two,
   },
-  button: {
-    backgroundColor: '#208AEF',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.two,
-    borderRadius: Spacing.two,
+  recaudo: {
+    gap: Spacing.half,
   },
-  buttonText: {
-    color: '#ffffff',
+  acciones: {
+    flexDirection: 'row',
+    gap: Spacing.two,
   },
 });

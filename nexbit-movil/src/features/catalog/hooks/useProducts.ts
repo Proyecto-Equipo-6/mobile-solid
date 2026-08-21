@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 import * as catalogService from '@/features/catalog/services/catalog.service';
 import type { Category, Product } from '@/features/catalog/types/catalog.types';
@@ -16,7 +16,7 @@ export function useProducts() {
     (async () => {
       try {
         const [productsData, categoriesData] = await Promise.all([
-          catalogService.listProducts(selectedCategory),
+          catalogService.listProducts(),
           catalogService.listCategories(),
         ]);
         if (!cancelled) {
@@ -37,7 +37,20 @@ export function useProducts() {
     return () => {
       cancelled = true;
     };
-  }, [selectedCategory, reloadKey]);
+  }, [reloadKey]);
+
+  const filteredProducts = useMemo(() => {
+    if (!selectedCategory) {
+      return products;
+    }
+    const categoryName = categories.find(
+      (category) => category.id === selectedCategory,
+    )?.name;
+    if (!categoryName) {
+      return products;
+    }
+    return products.filter((product) => product.categoryName === categoryName);
+  }, [products, categories, selectedCategory]);
 
   const reload = useCallback(() => {
     setIsLoading(true);
@@ -45,7 +58,7 @@ export function useProducts() {
   }, []);
 
   return {
-    products,
+    products: filteredProducts,
     categories,
     selectedCategory,
     setSelectedCategory,

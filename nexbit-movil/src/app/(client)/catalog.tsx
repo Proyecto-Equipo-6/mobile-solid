@@ -1,10 +1,10 @@
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { useCallback } from 'react';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, View } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 
 import { CategoryFilter } from '@/features/catalog/components/CategoryFilter';
 import { ProductCard } from '@/features/catalog/components/ProductCard';
 import { useProducts } from '@/features/catalog/hooks/useProducts';
-import { useCart } from '@/features/cart/hooks/useCart';
-import type { Product } from '@/features/catalog/types/catalog.types';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Spacing } from '@/shared/constants/theme';
@@ -12,16 +12,14 @@ import { Spacing } from '@/shared/constants/theme';
 export default function CatalogScreen() {
   const { products, categories, selectedCategory, setSelectedCategory, isLoading, error, reload } =
     useProducts();
-  const { addItem } = useCart();
 
-  function handleSelectProduct(product: Product) {
-    addItem({
-      productId: product.id,
-      name: product.name,
-      price: product.price,
-      imageUrl: product.imageUrl,
-    });
-  }
+  useFocusEffect(
+    useCallback(() => {
+      reload();
+    }, [reload])
+  );
+
+  const categoryNameById = new Map(categories.map((category) => [category.id, category.name]));
 
   if (isLoading) {
     return (
@@ -44,11 +42,19 @@ export default function CatalogScreen() {
 
   return (
     <ThemedView style={styles.container}>
+      <ThemedView style={styles.cabecera}>
+        <ThemedText type="subtitle">Nuestro catálogo</ThemedText>
+        <ThemedText type="small" themeColor="textSecondary">
+          Productos disponibles con stock real y garantía incluida.
+        </ThemedText>
+      </ThemedView>
+
       <CategoryFilter
         categories={categories}
         selectedCategory={selectedCategory}
         onSelect={setSelectedCategory}
       />
+
       <FlatList
         data={products}
         keyExtractor={(item) => item.id}
@@ -56,10 +62,17 @@ export default function CatalogScreen() {
         columnWrapperStyle={styles.row}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <ProductCard product={item} onPress={handleSelectProduct} />
+          <View style={styles.cell}>
+            <ProductCard
+              product={item}
+              categoryName={item.categoryName ?? categoryNameById.get(item.categoryId ?? '')}
+            />
+          </View>
         )}
         ListEmptyComponent={
-          <ThemedText themeColor="textSecondary">No hay productos disponibles.</ThemedText>
+          <ThemedView style={styles.vacio}>
+            <ThemedText themeColor="textSecondary">No hay productos disponibles.</ThemedText>
+          </ThemedView>
         }
       />
     </ThemedView>
@@ -76,12 +89,24 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
+  cabecera: {
+    padding: Spacing.three,
+    gap: Spacing.one,
+  },
   row: {
     gap: Spacing.two,
     paddingHorizontal: Spacing.three,
   },
+  cell: {
+    flex: 1,
+  },
   listContent: {
-    gap: Spacing.two,
+    gap: Spacing.three,
     paddingVertical: Spacing.three,
+    paddingBottom: Spacing.five,
+  },
+  vacio: {
+    padding: Spacing.four,
+    alignItems: 'center',
   },
 });

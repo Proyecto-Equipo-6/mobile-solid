@@ -3,30 +3,34 @@ import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native
 
 import { OrderAssigneeModal } from '@/features/admin-panel/components/OrderAssigneeModal';
 import { useAdminOrders } from '@/features/admin-panel/hooks/useAdminInventory';
+import { Pill, STATUS_COLORS, STATUS_LABELS } from '@/shared/components/pill';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { Spacing } from '@/shared/constants/theme';
+import { DashColors, Spacing } from '@/shared/constants/theme';
+import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { formatCurrency, formatDateTime } from '@/shared/utils/format';
 
 export default function OrdersScreen() {
-  const { orders, drivers, isLoading, error, assignOrder, reload } = useAdminOrders();
+  const dash = useDashTheme();
+  const { orders, drivers, isLoading, error, assignOrder, confirmOrder, reload } = useAdminOrders();
   const [assigningOrderId, setAssigningOrderId] = useState<string | null>(null);
   const [isAssigning, setIsAssigning] = useState(false);
+  const [isConfirmingId, setIsConfirmingId] = useState<string | null>(null);
 
   if (isLoading) {
     return (
-      <ThemedView style={styles.centered}>
-        <ActivityIndicator />
+      <ThemedView style={[styles.centered, { backgroundColor: dash.bg }]}>
+        <ActivityIndicator color={dash.accent} />
       </ThemedView>
     );
   }
 
   if (error) {
     return (
-      <ThemedView style={styles.centered}>
-        <ThemedText themeColor="textSecondary">{error}</ThemedText>
+      <ThemedView style={[styles.centered, { backgroundColor: dash.bg }]}>
+        <ThemedText style={styles.errorTexto}>{error}</ThemedText>
         <Pressable onPress={reload}>
-          <ThemedText type="link">Reintentar</ThemedText>
+          <ThemedText style={styles.enlace}>Reintentar</ThemedText>
         </Pressable>
       </ThemedView>
     );
@@ -45,33 +49,69 @@ export default function OrdersScreen() {
     }
   }
 
+  async function handleConfirm(orderId: string) {
+    if (isConfirmingId !== null) {
+      return;
+    }
+    setIsConfirmingId(orderId);
+    try {
+      await confirmOrder(orderId);
+    } finally {
+      setIsConfirmingId(null);
+    }
+  }
+
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor: dash.bg }]}>
       <FlatList
         data={orders}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
         renderItem={({ item }) => (
-          <ThemedView type="backgroundElement" style={styles.orderCard}>
+          <ThemedView style={[styles.orderCard, { backgroundColor: dash.card, borderColor: dash.border }]}>
             <ThemedView style={styles.orderHeader}>
-              <ThemedText type="smallBold">{item.customerName}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {formatDateTime(item.createdAt)}
-              </ThemedText>
+              <ThemedView style={styles.orderId}>
+                <ThemedText type="smallBold" style={{ color: dash.text }}>
+                  {item.customerName}
+                </ThemedText>
+                <ThemedText type="small" style={{ color: dash.textSecondary }}>
+                  {formatDateTime(item.createdAt)}
+                </ThemedText>
+              </ThemedView>
+              <Pill
+                label={STATUS_LABELS[item.status] ?? item.status}
+                color={STATUS_COLORS[item.status]}
+              />
             </ThemedView>
-            <ThemedText type="small" themeColor="textSecondary">
-              {item.deliveryAddress.address}, {item.deliveryAddress.city}
+            <ThemedText type="small" style={{ color: dash.textSecondary }}>
+              {item.address}
             </ThemedText>
             <ThemedView style={styles.orderFooter}>
-              <ThemedText type="smallBold">{formatCurrency(item.total)}</ThemedText>
-              {!item.driverId && (
-                <Pressable onPress={() => setAssigningOrderId(item.id)}>
-                  <ThemedText type="link">Asignar repartidor</ThemedText>
-                </Pressable>
-              )}
+              <ThemedText type="smallBold" style={{ color: dash.text }}>
+                {formatCurrency(item.total)}
+              </ThemedText>
+              <ThemedView style={styles.acciones}>
+                {item.status === 'pending' && (
+                  <Pressable onPress={() => handleConfirm(item.id)} disabled={isConfirmingId !== null}>
+                    <ThemedText style={styles.enlace}>
+                      {isConfirmingId === item.id ? 'Confirmando…' : 'Confirmar'}
+                    </ThemedText>
+                  </Pressable>
+                )}
+                {!item.driverId && (
+                  <Pressable onPress={() => setAssigningOrderId(item.id)}>
+                    <ThemedText style={styles.enlace}>Asignar repartidor</ThemedText>
+                  </Pressable>
+                )}
+              </ThemedView>
             </ThemedView>
           </ThemedView>
         )}
+        ListEmptyComponent={
+          <ThemedView style={styles.vacio}>
+            <ThemedText style={{ color: dash.textSecondary }}>No hay pedidos registrados.</ThemedText>
+          </ThemedView>
+        }
       />
 
       <OrderAssigneeModal
@@ -95,22 +135,46 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
+  errorTexto: {
+    color: DashColors.textSecondary,
+  },
+  enlace: {
+    color: DashColors.accent,
+    fontWeight: '600',
+  },
   listContent: {
     gap: Spacing.two,
     padding: Spacing.three,
   },
   orderCard: {
     padding: Spacing.three,
-    borderRadius: Spacing.three,
+    borderRadius: 12,
+    borderWidth: 1,
     gap: Spacing.two,
   },
   orderHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  orderId: {
+    flex: 1,
+    gap: Spacing.half,
   },
   orderFooter: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: Spacing.two,
+  },
+  acciones: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.three,
+  },
+  vacio: {
+    padding: Spacing.four,
     alignItems: 'center',
   },
 });
