@@ -23,26 +23,14 @@ export type DriverOption = {
 };
 
 export function mapRepartidorToDriver(repartidor: BackendRepartidor): DriverOption {
-  const isActiveByEstado = typeof repartidor.estado === 'string' && repartidor.estado.toUpperCase() === 'DISPONIBLE';
-  const isActiveByActivo = Number(repartidor.activo) === 1;
-  const available = isActiveByEstado || isActiveByActivo;
-
   const id = String(repartidor.id_repartidor ?? repartidor.id_usuario ?? repartidor.id);
   const name = repartidor.nombre_apellido ?? repartidor.nombre ?? repartidor.nombre_completo ?? repartidor.name ?? 'Sin Nombre';
-
-  console.log('[mapRepartidorToDriver]', {
-    id,
-    nombre: name,
-    estado: repartidor.estado,
-    activo: repartidor.activo,
-    available,
-  });
 
   return {
     id,
     name,
     phone: repartidor.telefono,
-    available,
+    available: true,
   };
 }
 
@@ -74,6 +62,7 @@ export type AdminOrder = {
   estadoRaw: string;
   createdAt: string;
   driverId?: string;
+  comprobanteUrl?: string | null;
 };
 
 export function mapPedidoAdminToAdminOrder(pedido: BackendPedidoAdmin): AdminOrder {
@@ -90,6 +79,7 @@ export function mapPedidoAdminToAdminOrder(pedido: BackendPedidoAdmin): AdminOrd
       pedido.id_repartidor !== undefined && pedido.id_repartidor !== null
         ? String(pedido.id_repartidor)
         : undefined,
+    comprobanteUrl: pedido.comprobante_url ?? null,
   };
 }
 

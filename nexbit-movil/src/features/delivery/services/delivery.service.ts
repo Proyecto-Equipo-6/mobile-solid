@@ -23,9 +23,9 @@ export type FotoEntrega = {
 };
 
 export async function getDashboard(): Promise<DriverDashboard> {
-  const response = await api.get<DashboardResponse>('/repartidor/dashboard');
+  const response = await api.get<DashboardResponse | { data: DashboardResponse }>('/repartidor/dashboard');
   console.log('[getDashboard] Raw response:', response);
-  const data = response.data ?? response;
+  const data = (response as { data?: DashboardResponse }).data ?? (response as DashboardResponse);
   console.log('[getDashboard] Extracted data:', data);
   return {
     conteoDelDia: data.conteoDelDia ?? 0,
@@ -70,7 +70,6 @@ export async function subirComprobante(orderId: string, imagen: PickedImage): Pr
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: tipo });
-    formData.append('comprobante', blob, `comprobante-${orderId}.jpg`);
     formData.append('foto', blob, `comprobante-${orderId}.jpg`);
   } else {
     const fileObj = {
@@ -78,12 +77,11 @@ export async function subirComprobante(orderId: string, imagen: PickedImage): Pr
       name: `comprobante-${orderId}.jpg`,
       type: tipo,
     } as unknown as Blob;
-    formData.append('comprobante', fileObj);
     formData.append('foto', fileObj);
   }
 
   const response = await api.upload<{ comprobante_url?: string; url?: string; imagen_url?: string; mensaje?: string }>(
-    `/pedidos/${orderId}/comprobante`,
+    `/repartidor/pedidos/${orderId}/comprobante`,
     formData,
   );
   return response.comprobante_url ?? response.url ?? response.imagen_url ?? '';

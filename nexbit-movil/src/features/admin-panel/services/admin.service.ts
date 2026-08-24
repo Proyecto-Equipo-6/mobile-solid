@@ -144,3 +144,41 @@ export async function updateOrderStatus(orderId: string, estado: string): Promis
   const data = await api.put<BackendPedidoAdmin>(`/admin/pedidos/${orderId}/estado`, { estado });
   return mapPedidoAdminToAdminOrder(data);
 }
+
+export async function deliverOrderWithEvidence(orderId: string, imagen: PickedImage, observacion?: string): Promise<AdminOrder> {
+  const tipo = imagen.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
+  const formData = new FormData();
+  
+  if (Platform.OS === 'web') {
+    const byteCharacters = atob(imagen.base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    const blob = new Blob([byteArray], { type: tipo });
+    formData.append('fotoEvidencia', blob, `entrega-${Date.now()}.jpg`);
+  } else {
+    formData.append('fotoEvidencia', {
+      uri: imagen.uri,
+      name: `entrega-${Date.now()}.jpg`,
+      type: tipo,
+    } as unknown as Blob);
+  }
+  
+  if (observacion) {
+    formData.append('observacion', observacion);
+  }
+  
+  console.log('[deliverOrderWithEvidence] Sending image:', { 
+    uri: Platform.OS === 'web' ? 'base64 data' : imagen.uri, 
+    name: `entrega-${Date.now()}.jpg`, 
+    type: tipo,
+    mimeType: imagen.mimeType,
+    observacion
+  });
+  
+  const data = await api.upload<BackendPedidoAdmin>(`/admin/pedidos/${orderId}/entregar`, formData);
+  console.log('[deliverOrderWithEvidence] Response:', data);
+  return mapPedidoAdminToAdminOrder(data);
+}

@@ -24,48 +24,48 @@ export function OrderAssigneeModal({
 }: OrderAssigneeModalProps) {
   const dash = useDashTheme();
 
-  const availableDrivers = drivers.filter((driver) => driver.available === true);
-
   return (
     <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <ThemedView style={[styles.backdrop, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]}>
+      <Pressable style={[styles.backdrop, { backgroundColor: 'rgba(0, 0, 0, 0.6)' }]} onPress={onClose}>
         <ThemedView style={[styles.modal, { backgroundColor: dash.card, borderColor: dash.border }]}>
           <ThemedText style={styles.titulo}>Asignar repartidor</ThemedText>
 
-          {availableDrivers.length === 0 && (
+          {drivers.length === 0 ? (
             <ThemedText type="small" style={{ color: dash.textSecondary }}>
-              No hay repartidores disponibles.
+              No hay repartidores registrados.
             </ThemedText>
+          ) : (
+            drivers.map((driver) => (
+              <Pressable
+                key={driver.id}
+                onPress={() => onSelect(driver.id)}
+                disabled={isAssigning}
+                style={({ pressed }) => pressed && styles.pressed}>
+                <ThemedView
+                  style={[
+                    styles.driverRow,
+                    { backgroundColor: dash.cardHover, borderColor: dash.border, borderWidth: 1 },
+                  ]}>
+                  <ThemedView style={styles.driverInfo}>
+                    <ThemedText type="smallBold" style={{ color: dash.text }}>
+                      {driver.name}
+                    </ThemedText>
+                    {driver.phone && (
+                      <ThemedText type="small" style={{ color: dash.textMuted }}>
+                        {driver.phone}
+                      </ThemedText>
+                    )}
+                  </ThemedView>
+                </ThemedView>
+              </Pressable>
+            ))
           )}
-
-          {availableDrivers.map((driver) => (
-            <Pressable
-              key={driver.id}
-              onPress={() => onSelect(driver.id)}
-              disabled={isAssigning}
-              style={({ pressed }) => pressed && styles.pressed}>
-              <ThemedView
-                style={[
-                  styles.driverRow,
-                  { backgroundColor: dash.cardHover, borderColor: dash.border, borderWidth: 1 },
-                ]}>
-                <ThemedText type="smallBold" style={{ color: dash.text }}>
-                  {driver.name}
-                </ThemedText>
-                {driver.phone && (
-                  <ThemedText type="small" style={{ color: dash.textMuted }}>
-                    {driver.phone}
-                  </ThemedText>
-                )}
-              </ThemedView>
-            </Pressable>
-          ))}
 
           {isAssigning && <ActivityIndicator color={dash.accent} />}
 
           <Button label="Cancelar" variant="secondary" onPress={onClose} />
         </ThemedView>
-      </ThemedView>
+      </Pressable>
     </Modal>
   );
 }
@@ -88,8 +88,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   driverRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     padding: Spacing.three,
     borderRadius: 8,
+    gap: Spacing.two,
+  },
+  driverInfo: {
+    flex: 1,
     gap: Spacing.half,
   },
   pressed: {

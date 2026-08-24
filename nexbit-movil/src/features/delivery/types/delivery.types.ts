@@ -27,6 +27,15 @@ export type DeliveryOrder = {
   status: OrderStatus;
   estadoRaw: string;
   createdAt: string;
+  products?: OrderProduct[];
+};
+
+export type OrderProduct = {
+  id: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  subtotal: number;
 };
 
 export function mapPedidoRepartidorToDeliveryOrder(
@@ -41,6 +50,13 @@ export function mapPedidoRepartidorToDeliveryOrder(
     status: ESTADO_ORDEN_A_INTERNO[pedido.estado] ?? 'assigned',
     estadoRaw: pedido.estado,
     createdAt: pedido.fecha_pedido ?? pedido.fecha_actualizacion ?? '',
+    products: pedido.productos?.map((p) => ({
+      id: String(p.id_producto),
+      name: p.nombre,
+      quantity: p.cantidad,
+      unitPrice: Number(p.precio_unitario),
+      subtotal: Number(p.subtotal),
+    })),
   };
 }
 

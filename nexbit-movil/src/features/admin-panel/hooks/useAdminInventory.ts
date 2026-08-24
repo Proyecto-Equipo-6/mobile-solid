@@ -7,6 +7,7 @@ import type {
   InventorySummary,
 } from '@/features/admin-panel/types/admin.types';
 import type { CreateProductPayload, Product, UpdateProductPayload } from '@/features/catalog/types/catalog.types';
+import type { PickedImage } from '@/shared/utils/imagePicker';
 
 function kpiValue(kpis: { id: string; valor: number }[], id: string): number {
   return kpis.find((kpi) => kpi.id === id)?.valor ?? 0;
@@ -161,5 +162,10 @@ export function useAdminOrders() {
     setOrders((current) => current.map((item) => (item.id === orderId ? { ...item, ...order } : item)));
   }, []);
 
-  return { orders, drivers, isLoading, error, assignOrder, confirmOrder, reload };
+  const deliverOrder = useCallback(async (orderId: string, imagen: PickedImage, observacion?: string) => {
+    const order = await adminService.deliverOrderWithEvidence(orderId, imagen, observacion);
+    setOrders((current) => current.map((item) => (item.id === orderId ? { ...item, ...order } : item)));
+  }, []);
+
+  return { orders, drivers, isLoading, error, assignOrder, confirmOrder, deliverOrder, reload };
 }

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 
 import * as deliveryService from '@/features/delivery/services/delivery.service';
-import type { DriverDashboard } from '@/features/delivery/types/delivery.types';
+import type { DeliveryOrder, DriverDashboard } from '@/features/delivery/types/delivery.types';
 import type { PickedImage } from '@/shared/utils/imagePicker';
 
 export function useDriverOrders() {
@@ -16,6 +16,14 @@ export function useDriverOrders() {
       try {
         const data = await deliveryService.getDashboard();
         if (!cancelled) {
+          if (data.pedidoActivo) {
+            try {
+              const details = await deliveryService.getOrderDetail(data.pedidoActivo.id);
+              data.pedidoActivo = { ...data.pedidoActivo, products: details.products };
+            } catch {
+              // Si falla el detalle, se queda sin productos
+            }
+          }
           setDashboard(data);
           setError(null);
         }
@@ -39,9 +47,15 @@ export function useDriverOrders() {
     setReloadKey((key) => key + 1);
   }, []);
 
-  const startDelivery = useCallback(async (orderId: string) => {
-    await deliveryService.updateDeliveryStatus(orderId, 'EN_CAMINO', 'ASIGNADO');
-    setReloadKey((key) => key + 1);
+  const startDelivery = useCallback(async (orderId: string): Promise<DeliveryOrder | null> => {
+    try {
+      const updated = await deliveryService.updateDeliveryStatus(orderId, 'EN_CAMINO', 'ASIGNADO');
+      setReloadKey((key) => key + 1);
+      return updated;
+    } catch {
+      setReloadKey((key) => key + 1);
+      return null;
+    }
   }, []);
 
   const uploadComprobante = useCallback(async (orderId: string, imagen: PickedImage): Promise<string> => {

@@ -1,5 +1,5 @@
 import { Link } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,20 +21,23 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const submittingRef = useRef(false);
 
   async function handleSubmit() {
-    if (submitting) {
+    if (submittingRef.current) {
       return;
     }
+    submittingRef.current = true;
     setError(null);
     setSubmitting(true);
     try {
       await signIn(email, password);
-      // El AuthLayout maneja el redirect automático según el rol
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'No se pudo iniciar sesión');
+      const msg = e instanceof Error ? e.message : 'No se pudo iniciar sesión';
+      setError(msg);
     } finally {
       setSubmitting(false);
+      submittingRef.current = false;
     }
   }
 
@@ -66,7 +69,7 @@ export default function LoginScreen() {
             label="Contraseña"
             value={password}
             onChangeText={setPassword}
-            placeholder="Entre 4 y 8 caracteres"
+            placeholder="Tu contraseña"
             secureTextEntry
             required
           />
