@@ -95,6 +95,11 @@ export async function createProduct(payload: CreateProductPayload): Promise<Prod
 }
 
 export async function updateProduct(id: string, payload: UpdateProductPayload): Promise<Product> {
+  let estado: number | undefined;
+  if (payload.available !== undefined) {
+    estado = payload.available ? 1 : 0;
+  }
+
   const body: BackendProductoPayload = {
     sku: payload.sku ?? '',
     id_categoria: Number(payload.categoryId ?? 0),
@@ -104,7 +109,7 @@ export async function updateProduct(id: string, payload: UpdateProductPayload): 
     precio: payload.price ?? 0,
     stock: payload.stock ?? 0,
     imagen_url: payload.imageUrl ?? null,
-    estado: payload.available === undefined ? undefined : payload.available ? 1 : 0,
+    estado,
   };
   const data = await api.put<BackendProducto>(`/productos/${id}`, body);
   return mapProductoToProduct(data);
