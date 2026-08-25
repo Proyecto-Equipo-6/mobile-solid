@@ -4,12 +4,12 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 
-type AdminFilterBarProps = {
+type AdminFilterBarProps = Readonly<{
   activeCount: number;
   inactiveCount: number;
   filter: 'active' | 'inactive';
   onFilterChange: (f: 'active' | 'inactive') => void;
-};
+}>;
 
 export function AdminFilterBar({ activeCount, inactiveCount, filter, onFilterChange }: AdminFilterBarProps) {
   return (

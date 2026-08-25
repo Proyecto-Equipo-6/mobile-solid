@@ -7,13 +7,13 @@ import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
-type OrderAssigneeModalProps = {
+type OrderAssigneeModalProps = Readonly<{
   visible: boolean;
   drivers: DriverOption[];
   isAssigning?: boolean;
   onSelect: (driverId: string) => void;
   onClose: () => void;
-};
+}>;
 
 export function OrderAssigneeModal({
   visible,

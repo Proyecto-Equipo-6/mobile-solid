@@ -1,20 +1,19 @@
 import { useState } from 'react';
-import { Alert, KeyboardAvoidingView, Platform, ScrollView, StyleSheet } from 'react-native';
+import { Alert, KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
-import { Pressable } from 'react-native';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Radius, Shadows, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
-type OrderDeliverModalProps = {
+type OrderDeliverModalProps = Readonly<{
   visible: boolean;
   orderId: string;
   onClose: () => void;
   onDeliver: (orderId: string, imagen: { uri: string; mimeType: string; base64?: string }, observacion?: string) => Promise<void>;
   isLoading: boolean;
-};
+}>;
 
 export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoading }: OrderDeliverModalProps) {
   const dash = useDashTheme();

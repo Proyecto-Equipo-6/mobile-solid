@@ -8,12 +8,12 @@ import { useTheme } from '@/shared/hooks/use-theme';
 
 type IoniconsName = ComponentProps<typeof Ionicons>['name'];
 
-function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; size: number }) {
+function TabBarIcon({ name, color, size }: Readonly<{ name: IoniconsName; color: string; size: number }>) {
   return <Ionicons name={name} size={size} color={color} />;
 }
 
 function makeTabBarIcon(name: IoniconsName) {
-  return function TabBarIconWrapper(props: { color: string; size: number }) {
+  return function TabBarIconWrapper(props: Readonly<{ color: string; size: number }>) {
     return <TabBarIcon name={name} {...props} />;
   };
 }
