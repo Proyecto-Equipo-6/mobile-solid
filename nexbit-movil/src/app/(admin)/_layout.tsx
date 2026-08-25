@@ -64,6 +64,41 @@ export default function AdminLayout() {
           tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
         }}
       />
+      <Tabs.Screen
+        name="users"
+        options={{
+          title: 'Usuarios',
+          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="categories"
+        options={{
+          title: 'Categorías',
+          tabBarIcon: ({ color, size }) => <Ionicons name="pricetags-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="suppliers"
+        options={{
+          title: 'Proveedores',
+          tabBarIcon: ({ color, size }) => <Ionicons name="business-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="drivers"
+        options={{
+          title: 'Repartidores',
+          tabBarIcon: ({ color, size }) => <Ionicons name="bicycle-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="roles"
+        options={{
+          title: 'Roles',
+          tabBarIcon: ({ color, size }) => <Ionicons name="key-outline" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }

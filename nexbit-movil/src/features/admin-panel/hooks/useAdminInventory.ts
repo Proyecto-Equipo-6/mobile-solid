@@ -3,8 +3,13 @@ import { useCallback, useEffect, useState } from 'react';
 import * as adminService from '@/features/admin-panel/services/admin.service';
 import type {
   AdminOrder,
+  CategoriaAdmin,
   DriverOption,
   InventorySummary,
+  ProveedorAdmin,
+  RepartidorAdmin,
+  RolAdmin,
+  UsuarioAdmin,
 } from '@/features/admin-panel/types/admin.types';
 import type { CreateProductPayload, Product, UpdateProductPayload } from '@/features/catalog/types/catalog.types';
 import type { PickedImage } from '@/shared/utils/imagePicker';
@@ -168,4 +173,225 @@ export function useAdminOrders() {
   }, []);
 
   return { orders, drivers, isLoading, error, assignOrder, confirmOrder, deliverOrder, reload };
+}
+
+// === HOOK: USUARIOS ===
+export function useAdminUsers() {
+  const [users, setUsers] = useState<UsuarioAdmin[]>([]);
+  const [roles, setRoles] = useState<{ id: string; name: string }[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const [usersData, rolesData] = await Promise.all([
+          adminService.listUsers(),
+          adminService.listRolesForDropdown(),
+        ]);
+        if (!cancelled) {
+          setUsers(usersData);
+          setRoles(rolesData);
+          setError(null);
+        }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudieron cargar los usuarios');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const reload = useCallback(() => { setIsLoading(true); setReloadKey((k) => k + 1); }, []);
+
+  const create = useCallback(async (payload: import('@/features/admin-panel/types/admin.types').CreateUserPayload) => {
+    const user = await adminService.createUser(payload);
+    setUsers((c) => [user, ...c]);
+    return user;
+  }, []);
+
+  const update = useCallback(async (id: string, payload: import('@/features/admin-panel/types/admin.types').UpdateUserPayload) => {
+    const user = await adminService.updateUser(id, payload);
+    setUsers((c) => c.map((u) => (u.id === id ? user : u)));
+    return user;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await adminService.deleteUser(id);
+    setUsers((c) => c.filter((u) => u.id !== id));
+  }, []);
+
+  return { users, roles, isLoading, error, create, update, remove, reload };
+}
+
+// === HOOK: CATEGORÍAS ===
+export function useAdminCategories() {
+  const [categories, setCategories] = useState<CategoriaAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listAllCategories();
+        if (!cancelled) { setCategories(data); setError(null); }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudieron cargar las categorías');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const reload = useCallback(() => { setIsLoading(true); setReloadKey((k) => k + 1); }, []);
+
+  const create = useCallback(async (payload: { nombre: string; descripcion: string; estado: string }) => {
+    const cat = await adminService.createCategory(payload);
+    setCategories((c) => [cat, ...c]);
+    return cat;
+  }, []);
+
+  const update = useCallback(async (id: string, payload: { nombre: string; descripcion: string; estado: string }) => {
+    const cat = await adminService.updateCategory(id, payload);
+    setCategories((c) => c.map((x) => (x.id === id ? cat : x)));
+    return cat;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await adminService.deleteCategory(id);
+    setCategories((c) => c.filter((x) => x.id !== id));
+  }, []);
+
+  return { categories, isLoading, error, create, update, remove, reload };
+}
+
+// === HOOK: PROVEEDORES ===
+export function useAdminSuppliers() {
+  const [suppliers, setSuppliers] = useState<ProveedorAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listAllSuppliers();
+        if (!cancelled) { setSuppliers(data); setError(null); }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudieron cargar los proveedores');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const reload = useCallback(() => { setIsLoading(true); setReloadKey((k) => k + 1); }, []);
+
+  const create = useCallback(async (payload: { nit_proveedor: string; razon_social: string; telefono: string; email: string }) => {
+    const sup = await adminService.createSupplier(payload);
+    setSuppliers((c) => [sup, ...c]);
+    return sup;
+  }, []);
+
+  const update = useCallback(async (id: string, payload: { nit_proveedor: string; razon_social: string; telefono: string; email: string; estado?: number }) => {
+    const sup = await adminService.updateSupplier(id, payload);
+    setSuppliers((c) => c.map((x) => (x.id === id ? sup : x)));
+    return sup;
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await adminService.deleteSupplier(id);
+    setSuppliers((c) => c.filter((x) => x.id !== id));
+  }, []);
+
+  return { suppliers, isLoading, error, create, update, remove, reload };
+}
+
+// === HOOK: REPARTIDORES ===
+export function useAdminDrivers() {
+  const [drivers, setDrivers] = useState<RepartidorAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listDriversAdmin();
+        if (!cancelled) { setDrivers(data); setError(null); }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudieron cargar los repartidores');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const reload = useCallback(() => { setIsLoading(true); setReloadKey((k) => k + 1); }, []);
+
+  const create = useCallback(async (payload: { nombre_apellido: string; email: string; password: string; telefono: string; vehiculo?: string; placa?: string }) => {
+    await adminService.createDriver(payload);
+    setReloadKey((k) => k + 1);
+  }, []);
+
+  const update = useCallback(async (id: string, payload: { nombre_apellido?: string; email?: string; telefono?: string; vehiculo?: string; placa?: string }) => {
+    await adminService.updateDriver(id, payload);
+    setReloadKey((k) => k + 1);
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    await adminService.deleteDriver(id);
+    setDrivers((c) => c.filter((x) => x.id !== id));
+  }, []);
+
+  return { drivers, isLoading, error, create, update, remove, reload };
+}
+
+// === HOOK: ROLES ===
+export function useAdminRoles() {
+  const [roles, setRoles] = useState<RolAdmin[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const data = await adminService.listRoles();
+        if (!cancelled) { setRoles(data); setError(null); }
+      } catch (e) {
+        if (!cancelled) setError(e instanceof Error ? e.message : 'No se pudieron cargar los roles');
+      } finally {
+        if (!cancelled) setIsLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [reloadKey]);
+
+  const reload = useCallback(() => { setIsLoading(true); setReloadKey((k) => k + 1); }, []);
+
+  const create = useCallback(async (payload: { name: string; description: string }) => {
+    const role = await adminService.createRole(payload);
+    setRoles((c) => [role, ...c]);
+    return role;
+  }, []);
+
+  const update = useCallback(async (id: string, payload: { name: string; description: string }) => {
+    const role = await adminService.updateRole(id, payload);
+    setRoles((c) => c.map((r) => (r.id === id ? role : r)));
+    return role;
+  }, []);
+
+  return { roles, isLoading, error, create, update, reload };
 }

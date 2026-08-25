@@ -6,12 +6,28 @@ import type {
   AnalyticsResumen,
   BackendPedidoAdmin,
   BackendRepartidor,
+  BackendUsuarioAdmin,
+  BackendCategoria,
+  BackendProveedorAdmin,
+  BackendRepartidorAdmin,
+  BackendRol,
+  CategoriaAdmin,
+  CreateUserPayload,
   DriverOption,
   Proveedor,
+  RepartidorAdmin,
+  RolAdmin,
+  UpdateUserPayload,
+  UsuarioAdmin,
 } from '@/features/admin-panel/types/admin.types';
 import {
   mapPedidoAdminToAdminOrder,
   mapRepartidorToDriver,
+  mapUsuarioAdminToFrontend,
+  mapCategoriaToFrontend,
+  mapProveedorToFrontend,
+  mapRepartidorAdminToFrontend,
+  mapRolToFrontend,
 } from '@/features/admin-panel/types/admin.types';
 import type {
   BackendProducto,
@@ -181,4 +197,105 @@ export async function deliverOrderWithEvidence(orderId: string, imagen: PickedIm
   const data = await api.upload<BackendPedidoAdmin>(`/admin/pedidos/${orderId}/entregar`, formData);
   console.log('[deliverOrderWithEvidence] Response:', data);
   return mapPedidoAdminToAdminOrder(data);
+}
+
+// === USUARIOS ===
+export async function listUsers(): Promise<UsuarioAdmin[]> {
+  const data = await api.get<BackendUsuarioAdmin[] | { data: BackendUsuarioAdmin[] }>('/admin/usuarios');
+  const list = Array.isArray(data) ? data : (data?.data ?? []);
+  return list.map(mapUsuarioAdminToFrontend);
+}
+
+export async function listRolesForDropdown(): Promise<{ id: string; name: string }[]> {
+  const data = await api.get<BackendRol[]>('/roles');
+  return data.map((r) => ({ id: String(r.id), name: r.name }));
+}
+
+export async function createUser(payload: CreateUserPayload): Promise<UsuarioAdmin> {
+  const data = await api.post<{ usuario: BackendUsuarioAdmin }>('/admin/usuarios', payload);
+  return mapUsuarioAdminToFrontend(data.usuario);
+}
+
+export async function updateUser(id: string, payload: UpdateUserPayload): Promise<UsuarioAdmin> {
+  const data = await api.put<{ usuario: BackendUsuarioAdmin }>(`/admin/usuarios/${id}`, payload);
+  return mapUsuarioAdminToFrontend(data.usuario);
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await api.delete<void>(`/admin/usuarios/${id}`);
+}
+
+// === CATEGORÍAS ===
+export async function listAllCategories(): Promise<CategoriaAdmin[]> {
+  const data = await api.get<BackendCategoria[]>('/categorias/todas');
+  return data.map(mapCategoriaToFrontend);
+}
+
+export async function createCategory(payload: { nombre: string; descripcion: string; estado: string }): Promise<CategoriaAdmin> {
+  const data = await api.post<BackendCategoria>('/categorias', payload);
+  return mapCategoriaToFrontend(data);
+}
+
+export async function updateCategory(id: string, payload: { nombre: string; descripcion: string; estado: string }): Promise<CategoriaAdmin> {
+  const data = await api.put<BackendCategoria>(`/categorias/${id}`, payload);
+  return mapCategoriaToFrontend(data);
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await api.delete<void>(`/categorias/${id}`);
+}
+
+// === PROVEEDORES ===
+export async function listAllSuppliers(): Promise<ProveedorAdmin[]> {
+  const data = await api.get<BackendProveedorAdmin[]>('/proveedores/todos');
+  return data.map(mapProveedorToFrontend);
+}
+
+export async function createSupplier(payload: { nit_proveedor: string; razon_social: string; telefono: string; email: string }): Promise<ProveedorAdmin> {
+  const data = await api.post<BackendProveedorAdmin>('/proveedores', payload);
+  return mapProveedorToFrontend(data);
+}
+
+export async function updateSupplier(id: string, payload: { nit_proveedor: string; razon_social: string; telefono: string; email: string; estado?: number }): Promise<ProveedorAdmin> {
+  const data = await api.put<BackendProveedorAdmin>(`/proveedores/${id}`, payload);
+  return mapProveedorToFrontend(data);
+}
+
+export async function deleteSupplier(id: string): Promise<void> {
+  await api.delete<void>(`/proveedores/${id}`);
+}
+
+// === REPARTIDORES (ADMIN) ===
+export async function listDriversAdmin(): Promise<RepartidorAdmin[]> {
+  const data = await api.get<BackendRepartidorAdmin[] | { data: BackendRepartidorAdmin[] }>('/admin/repartidores');
+  const list = Array.isArray(data) ? data : (data?.data ?? []);
+  return list.map(mapRepartidorAdminToFrontend);
+}
+
+export async function createDriver(payload: { nombre_apellido: string; email: string; password: string; telefono: string; vehiculo?: string; placa?: string; direccion?: string }): Promise<void> {
+  await api.post('/admin/repartidores', payload);
+}
+
+export async function updateDriver(id: string, payload: { nombre_apellido?: string; email?: string; telefono?: string; vehiculo?: string; placa?: string; direccion?: string }): Promise<void> {
+  await api.put(`/admin/repartidores/${id}`, payload);
+}
+
+export async function deleteDriver(id: string): Promise<void> {
+  await api.delete<void>(`/admin/repartidores/${id}`);
+}
+
+// === ROLES ===
+export async function listRoles(): Promise<RolAdmin[]> {
+  const data = await api.get<BackendRol[]>('/roles');
+  return data.map(mapRolToFrontend);
+}
+
+export async function createRole(payload: { name: string; description: string }): Promise<RolAdmin> {
+  const data = await api.post<BackendRol>('/roles', payload);
+  return mapRolToFrontend(data);
+}
+
+export async function updateRole(id: string, payload: { name: string; description: string }): Promise<RolAdmin> {
+  const data = await api.put<BackendRol>('/roles', { id: Number(id), ...payload });
+  return mapRolToFrontend(data);
 }
