@@ -5,11 +5,11 @@ import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
-type AdminEmptyStateProps = {
+type AdminEmptyStateProps = Readonly<{
   message: string;
   actionLabel?: string;
   onAction?: () => void;
-};
+}>;
 
 export function AdminEmptyState({ message, actionLabel, onAction }: AdminEmptyStateProps) {
   const dash = useDashTheme();
