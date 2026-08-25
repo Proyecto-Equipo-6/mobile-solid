@@ -12,6 +12,18 @@ function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; 
   return <Ionicons name={name} size={size} color={color} />;
 }
 
+function HeaderSignOutButton({ onPress }: { onPress: () => void }) {
+  return (
+    <Ionicons
+      name="log-out-outline"
+      size={24}
+      color={DashColors.text}
+      onPress={onPress}
+      style={{ paddingRight: 16 }}
+    />
+  );
+}
+
 export default function AdminLayout() {
   const { role, isAuthenticated, isLoading, signOut } = useAuth();
 
@@ -40,15 +52,7 @@ export default function AdminLayout() {
         headerStyle: { backgroundColor: DashColors.fondo },
         headerTitleStyle: { fontWeight: '700', color: DashColors.text },
         sceneStyle: { backgroundColor: DashColors.bg },
-        headerRight: () => (
-          <Ionicons
-            name="log-out-outline"
-            size={24}
-            color={DashColors.text}
-            onPress={signOut}
-            style={{ paddingRight: 16 }}
-          />
-        ),
+        headerRight: () => <HeaderSignOutButton onPress={signOut} />,
       }}>
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: (props) => <TabBarIcon name="stats-chart-outline" {...props} /> }} />
       <Tabs.Screen name="products" options={{ title: 'Productos', tabBarIcon: (props) => <TabBarIcon name="cube-outline" {...props} /> }} />
