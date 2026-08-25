@@ -8,17 +8,17 @@ import { DashColors } from '@/shared/constants/theme';
 
 type IoniconsName = ComponentProps<typeof Ionicons>['name'];
 
-function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; size: number }) {
+function TabBarIcon({ name, color, size }: Readonly<{ name: IoniconsName; color: string; size: number }>) {
   return <Ionicons name={name} size={size} color={color} />;
 }
 
 function makeTabBarIcon(name: IoniconsName) {
-  return function TabBarIconWrapper(props: { color: string; size: number }) {
+  return function TabBarIconWrapper(props: Readonly<{ color: string; size: number }>) {
     return <TabBarIcon name={name} {...props} />;
   };
 }
 
-function HeaderSignOutButton({ onPress }: { onPress: () => void }) {
+function HeaderSignOutButton({ onPress }: Readonly<{ onPress: () => void }>) {
   return (
     <Ionicons
       name="log-out-outline"
@@ -30,7 +30,7 @@ function HeaderSignOutButton({ onPress }: { onPress: () => void }) {
   );
 }
 
-function HeaderRight({ signOut }: { signOut: () => void }) {
+function HeaderRight({ signOut }: Readonly<{ signOut: () => void }>) {
   return <HeaderSignOutButton onPress={signOut} />;
 }
 
