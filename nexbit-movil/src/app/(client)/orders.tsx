@@ -22,7 +22,7 @@ export default function OrdersScreen() {
     }
     try {
       const data = await orderService.listMyOrders();
-      setOrders(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+      setOrders(data.toSorted((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
       setError(null);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudieron cargar tus pedidos');
@@ -37,7 +37,7 @@ export default function OrdersScreen() {
       try {
         const data = await orderService.listMyOrders();
         if (active) {
-          setOrders(data.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
+          setOrders(data.toSorted((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()));
         }
       } catch (e) {
         if (active) {
