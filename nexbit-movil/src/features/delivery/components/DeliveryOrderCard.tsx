@@ -24,6 +24,134 @@ type DeliveryOrderCardProps = {
   isConfirming?: boolean;
 };
 
+function OrderProductsList({ products }: { products: NonNullable<DeliveryOrder['products']> }) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.productsSection}>
+      <ThemedText type="smallBold" style={{ color: dash.text }}>
+        Productos:
+      </ThemedText>
+      {products.map((product) => (
+        <ThemedView key={product.id} style={styles.productRow}>
+          <ThemedText type="small" style={[styles.productName, { color: dash.textSecondary }]}>
+            {product.quantity}x {product.name}
+          </ThemedText>
+          <ThemedText type="small" style={{ color: dash.textSecondary }}>
+            {formatCurrency(product.subtotal)}
+          </ThemedText>
+        </ThemedView>
+      ))}
+    </ThemedView>
+  );
+}
+
+function DeliveryStatusSelector({
+  selectedStatus,
+  onSelect,
+}: {
+  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO' | null;
+  onSelect: (status: 'ENTREGADO' | 'NO_ENTREGADO') => void;
+}) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.statusRow}>
+      <Pressable onPress={() => onSelect('ENTREGADO')}>
+        <ThemedView
+          style={[
+            styles.statusChip,
+            {
+              backgroundColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.cardHover,
+              borderColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.border,
+            },
+          ]}>
+          <ThemedText
+            type="smallBold"
+            style={{ color: selectedStatus === 'ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
+            Entregado
+          </ThemedText>
+        </ThemedView>
+      </Pressable>
+
+      <Pressable onPress={() => onSelect('NO_ENTREGADO')}>
+        <ThemedView
+          style={[
+            styles.statusChip,
+            {
+              backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.cardHover,
+              borderColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.border,
+            },
+          ]}>
+          <ThemedText
+            type="smallBold"
+            style={{ color: selectedStatus === 'NO_ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
+            No entregado
+          </ThemedText>
+        </ThemedView>
+      </Pressable>
+    </ThemedView>
+  );
+}
+
+function DeliveryActionsSection({
+  selectedStatus,
+  isUploading,
+  comprobanteUploaded,
+  onUploadComprobante,
+  observation,
+  onObservationChange,
+  isConfirming,
+  onConfirm,
+}: {
+  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO';
+  isUploading: boolean;
+  comprobanteUploaded: boolean;
+  onUploadComprobante: () => void;
+  observation: string;
+  onObservationChange: (text: string) => void;
+  isConfirming: boolean;
+  onConfirm: () => void;
+}) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.actionsSection}>
+      {selectedStatus === 'ENTREGADO' && (
+        <ThemedView style={styles.comprobanteSection}>
+          <Button
+            label={isUploading ? 'Subiendo…' : comprobanteUploaded ? 'Comprobante subido ✓' : 'Subir comprobante'}
+            variant={comprobanteUploaded ? 'secondary' : 'primary'}
+            pill
+            loading={isUploading}
+            disabled={isUploading || comprobanteUploaded}
+            onPress={onUploadComprobante}
+          />
+        </ThemedView>
+      )}
+
+      {selectedStatus === 'NO_ENTREGADO' && (
+        <TextInput
+          value={observation}
+          onChangeText={onObservationChange}
+          placeholder="Motivo de no entrega (obligatorio)..."
+          placeholderTextColor={dash.textMuted}
+          style={[styles.input, styles.textarea, { color: dash.text, backgroundColor: dash.cardHover, borderColor: dash.border }]}
+          multiline
+        />
+      )}
+
+      <ThemedView style={styles.confirmRow}>
+        <Button
+          label={isConfirming ? 'Confirmando…' : 'Confirmar'}
+          pill
+          loading={isConfirming}
+          disabled={isConfirming || isUploading}
+          onPress={onConfirm}
+          style={{ backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#7f1d1d' : dash.accent }}
+        />
+      </ThemedView>
+    </ThemedView>
+  );
+}
+
 export function DeliveryOrderCard({
   order,
   isStarting,
@@ -42,11 +170,7 @@ export function DeliveryOrderCard({
   const isAssigned = order.status === 'assigned';
   const isInTransit = order.status === 'in_transit';
   const isPendingAction = isAssigned || isInTransit;
-
-  const inputStyle = [
-    styles.input,
-    { color: dash.text, backgroundColor: dash.cardHover, borderColor: dash.border },
-  ];
+  const hasProducts = order.products && order.products.length > 0;
 
   return (
     <ThemedView style={[styles.card, { backgroundColor: dash.card, borderColor: dash.border }]}>
@@ -68,29 +192,13 @@ export function DeliveryOrderCard({
       <ThemedText type="small" style={{ color: dash.textSecondary }}>
         {order.address}
       </ThemedText>
-      {order.customerPhone ? (
+      {order.customerPhone && (
         <ThemedText type="small" style={{ color: dash.textSecondary }}>
           {order.customerPhone}
         </ThemedText>
-      ) : null}
+      )}
 
-      {order.products && order.products.length > 0 ? (
-        <ThemedView style={styles.productsSection}>
-          <ThemedText type="smallBold" style={{ color: dash.text }}>
-            Productos:
-          </ThemedText>
-          {order.products.map((product) => (
-            <ThemedView key={product.id} style={styles.productRow}>
-              <ThemedText type="small" style={[styles.productName, { color: dash.textSecondary }]}>
-                {product.quantity}x {product.name}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: dash.textSecondary }}>
-                {formatCurrency(product.subtotal)}
-              </ThemedText>
-            </ThemedView>
-          ))}
-        </ThemedView>
-      ) : null}
+      {hasProducts && <OrderProductsList products={order.products!} />}
 
       <ThemedView style={styles.recaudo}>
         <ThemedText type="small" style={{ color: dash.textMuted }}>
@@ -101,105 +209,40 @@ export function DeliveryOrderCard({
         </ThemedText>
       </ThemedView>
 
-      {isAssigned && onStart && !onStatusSelect ? (
+      {isAssigned && onStart && !onStatusSelect && (
         <ThemedView style={styles.footerFull}>
           <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
         </ThemedView>
-      ) : null}
+      )}
 
-      {isPendingAction && onStatusSelect ? (
+      {isPendingAction && onStatusSelect && (
         <ThemedView style={styles.statusSection}>
-          {isAssigned && onStart ? (
+          {isAssigned && onStart && (
             <ThemedView style={styles.startRow}>
-              <Button
-                label={isStarting ? 'Iniciando…' : 'Iniciar entrega'}
-                pill
-                loading={isStarting}
-                onPress={onStart}
-              />
+              <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
             </ThemedView>
-          ) : null}
+          )}
 
           <ThemedText type="smallBold" style={{ color: dash.text }}>
             Estado del pedido:
           </ThemedText>
 
-          <ThemedView style={styles.statusRow}>
-            <Pressable onPress={() => onStatusSelect('ENTREGADO')}>
-              <ThemedView
-                style={[
-                  styles.statusChip,
-                  {
-                    backgroundColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.cardHover,
-                    borderColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.border,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: selectedStatus === 'ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
-                  Entregado
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
+          <DeliveryStatusSelector selectedStatus={selectedStatus ?? null} onSelect={onStatusSelect} />
 
-            <Pressable onPress={() => onStatusSelect('NO_ENTREGADO')}>
-              <ThemedView
-                style={[
-                  styles.statusChip,
-                  {
-                    backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.cardHover,
-                    borderColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.border,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: selectedStatus === 'NO_ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
-                  No entregado
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          </ThemedView>
-
-          {selectedStatus === 'ENTREGADO' ? (
-            <ThemedView style={styles.comprobanteSection}>
-              <Button
-                label={isUploading ? 'Subiendo…' : comprobanteUploaded ? 'Comprobante subido ✓' : 'Subir comprobante'}
-                variant={comprobanteUploaded ? 'secondary' : 'primary'}
-                pill
-                loading={isUploading}
-                disabled={isUploading || comprobanteUploaded}
-                onPress={onUploadComprobante}
-              />
-            </ThemedView>
-          ) : null}
-
-          {selectedStatus === 'NO_ENTREGADO' ? (
-            <TextInput
-              value={observation}
-              onChangeText={onObservationChange}
-              placeholder="Motivo de no entrega (obligatorio)..."
-              placeholderTextColor={dash.textMuted}
-              style={[inputStyle, styles.textarea]}
-              multiline
+          {selectedStatus && (
+            <DeliveryActionsSection
+              selectedStatus={selectedStatus}
+              isUploading={isUploading ?? false}
+              comprobanteUploaded={comprobanteUploaded ?? false}
+              onUploadComprobante={onUploadComprobante!}
+              observation={observation ?? ''}
+              onObservationChange={onObservationChange!}
+              isConfirming={isConfirming ?? false}
+              onConfirm={onConfirm!}
             />
-          ) : null}
-
-          {selectedStatus ? (
-            <ThemedView style={styles.confirmRow}>
-              <Button
-                label={isConfirming ? 'Confirmando…' : 'Confirmar'}
-                pill
-                loading={isConfirming}
-                disabled={isConfirming || isUploading}
-                onPress={onConfirm}
-                style={{
-                  backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#7f1d1d' : dash.accent,
-                }}
-              />
-            </ThemedView>
-          ) : null}
+          )}
         </ThemedView>
-      ) : null}
+      )}
     </ThemedView>
   );
 }
@@ -254,6 +297,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     borderRadius: 999,
     borderWidth: 1,
+  },
+  actionsSection: {
+    gap: Spacing.two,
   },
   comprobanteSection: {
     marginTop: Spacing.one,

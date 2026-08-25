@@ -1,9 +1,16 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLE_HOME } from '@/features/auth/types/auth.types';
 import { DashColors } from '@/shared/constants/theme';
+
+type IoniconsName = ComponentProps<typeof Ionicons>['name'];
+
+function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; size: number }) {
+  return <Ionicons name={name} size={size} color={color} />;
+}
 
 export default function AdminLayout() {
   const { role, isAuthenticated, isLoading, signOut } = useAuth();
@@ -43,62 +50,14 @@ export default function AdminLayout() {
           />
         ),
       }}>
-      <Tabs.Screen
-        name="dashboard"
-        options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color, size }) => <Ionicons name="stats-chart-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="products"
-        options={{
-          title: 'Productos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="orders"
-        options={{
-          title: 'Pedidos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="list-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="users"
-        options={{
-          title: 'Usuarios',
-          tabBarIcon: ({ color, size }) => <Ionicons name="people-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="categories"
-        options={{
-          title: 'Categorías',
-          tabBarIcon: ({ color, size }) => <Ionicons name="pricetags-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="suppliers"
-        options={{
-          title: 'Proveedores',
-          tabBarIcon: ({ color, size }) => <Ionicons name="business-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="drivers"
-        options={{
-          title: 'Repartidores',
-          tabBarIcon: ({ color, size }) => <Ionicons name="bicycle-outline" size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="roles"
-        options={{
-          title: 'Roles',
-          tabBarIcon: ({ color, size }) => <Ionicons name="key-outline" size={size} color={color} />,
-        }}
-      />
+      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: (props) => <TabBarIcon name="stats-chart-outline" {...props} /> }} />
+      <Tabs.Screen name="products" options={{ title: 'Productos', tabBarIcon: (props) => <TabBarIcon name="cube-outline" {...props} /> }} />
+      <Tabs.Screen name="orders" options={{ title: 'Pedidos', tabBarIcon: (props) => <TabBarIcon name="list-outline" {...props} /> }} />
+      <Tabs.Screen name="users" options={{ title: 'Usuarios', tabBarIcon: (props) => <TabBarIcon name="people-outline" {...props} /> }} />
+      <Tabs.Screen name="categories" options={{ title: 'Categorías', tabBarIcon: (props) => <TabBarIcon name="pricetags-outline" {...props} /> }} />
+      <Tabs.Screen name="suppliers" options={{ title: 'Proveedores', tabBarIcon: (props) => <TabBarIcon name="business-outline" {...props} /> }} />
+      <Tabs.Screen name="drivers" options={{ title: 'Repartidores', tabBarIcon: (props) => <TabBarIcon name="bicycle-outline" {...props} /> }} />
+      <Tabs.Screen name="roles" options={{ title: 'Roles', tabBarIcon: (props) => <TabBarIcon name="key-outline" {...props} /> }} />
     </Tabs>
   );
 }
