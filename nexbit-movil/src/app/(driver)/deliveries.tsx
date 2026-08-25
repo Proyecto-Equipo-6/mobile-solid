@@ -122,6 +122,34 @@ export default function DeliveriesScreen() {
     }
   }
 
+  function getActiveOrderProps(item: DeliveryOrder) {
+    if (item.id !== activeOrder?.id) {
+      return {};
+    }
+    return {
+      onStatusSelect: (s: 'ENTREGADO' | 'NO_ENTREGADO') => setSelectedStatus(s),
+      selectedStatus,
+      onUploadComprobante: handleUploadComprobante,
+      isUploading,
+      comprobanteUploaded: Boolean(comprobanteUrl),
+      observation,
+      onObservationChange: setObservation,
+      onConfirm: handleConfirm,
+      isConfirming,
+    };
+  }
+
+  function renderDeliveryOrder({ item }: { item: DeliveryOrder }) {
+    return (
+      <DeliveryOrderCard
+        order={item}
+        isStarting={startingOrderId === item.id}
+        onStart={() => handleStart(item)}
+        {...getActiveOrderProps(item)}
+      />
+    );
+  }
+
   return (
     <ThemedView style={[styles.container, { backgroundColor: dash.bg }]}>
       <ThemedView style={styles.cabecera}>
@@ -135,26 +163,7 @@ export default function DeliveriesScreen() {
         data={activeOrder ? [activeOrder, ...queue] : queue}
         keyExtractor={(item) => item.id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => {
-          const isActive = item.id === activeOrder?.id;
-          const isAssigned = item.status === 'assigned';
-          return (
-            <DeliveryOrderCard
-              order={item}
-              isStarting={startingOrderId === item.id}
-              onStart={() => handleStart(item)}
-              onStatusSelect={isActive ? (s) => setSelectedStatus(s) : undefined}
-              selectedStatus={isActive ? selectedStatus : null}
-              onUploadComprobante={isActive ? handleUploadComprobante : undefined}
-              isUploading={isActive ? isUploading : false}
-              comprobanteUploaded={isActive ? Boolean(comprobanteUrl) : false}
-              observation={isActive ? observation : ''}
-              onObservationChange={isActive ? setObservation : undefined}
-              onConfirm={isActive ? handleConfirm : undefined}
-              isConfirming={isActive ? isConfirming : false}
-            />
-          );
-        }}
+        renderItem={renderDeliveryOrder}
         ListEmptyComponent={
           <ThemedView style={styles.centered}>
             <ThemedText style={{ color: dash.textSecondary }}>
