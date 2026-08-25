@@ -2,15 +2,15 @@ import { Modal, Pressable, ScrollView, StyleSheet } from 'react-native';
 
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
-import { DashColors, Spacing } from '@/shared/constants/theme';
+import { Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
-type AdminCrudModalProps = {
+type AdminCrudModalProps = Readonly<{
   visible: boolean;
   title: string;
   onClose: () => void;
   children: React.ReactNode;
-};
+}>;
 
 export function AdminCrudModal({ visible, title, onClose, children }: AdminCrudModalProps) {
   const dash = useDashTheme();
