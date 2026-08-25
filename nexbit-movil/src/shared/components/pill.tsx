@@ -24,15 +24,17 @@ export const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelado',
 };
 
+export type PillProps = Readonly<{
+  label: string;
+  color?: string;
+  style?: StyleProp<ViewStyle>;
+}>;
+
 export function Pill({
   label,
   color,
   style,
-}: {
-  label: string;
-  color?: string;
-  style?: StyleProp<ViewStyle>;
-}) {
+}: PillProps) {
   const c = color ?? '#6b7280';
   const bg = hexToRgba(c, 0.1);
 

@@ -1,3 +1,5 @@
+export type DateInput = string | number | Date;
+
 const currencyFormatter = new Intl.NumberFormat('es-CO', {
   style: 'currency',
   currency: 'COP',
@@ -8,11 +10,11 @@ export function formatCurrency(value: number): string {
   return currencyFormatter.format(value);
 }
 
-function toDate(value: string | number | Date): Date {
+function toDate(value: DateInput): Date {
   return value instanceof Date ? value : new Date(value);
 }
 
-export function formatDate(value: string | number | Date): string {
+export function formatDate(value: DateInput): string {
   return new Intl.DateTimeFormat('es-CO', {
     year: 'numeric',
     month: 'long',
@@ -20,7 +22,7 @@ export function formatDate(value: string | number | Date): string {
   }).format(toDate(value));
 }
 
-export function formatShortDate(value: string | number | Date): string {
+export function formatShortDate(value: DateInput): string {
   return new Intl.DateTimeFormat('es-CO', {
     year: 'numeric',
     month: '2-digit',
@@ -28,14 +30,14 @@ export function formatShortDate(value: string | number | Date): string {
   }).format(toDate(value));
 }
 
-export function formatTime(value: string | number | Date): string {
+export function formatTime(value: DateInput): string {
   return new Intl.DateTimeFormat('es-CO', {
     hour: '2-digit',
     minute: '2-digit',
   }).format(toDate(value));
 }
 
-export function formatDateTime(value: string | number | Date): string {
+export function formatDateTime(value: DateInput): string {
   return new Intl.DateTimeFormat('es-CO', {
     year: 'numeric',
     month: 'short',

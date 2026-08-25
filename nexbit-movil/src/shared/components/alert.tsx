@@ -7,15 +7,17 @@ import { useTheme } from '@/shared/hooks/use-theme';
 
 export type AlertVariant = 'error' | 'success';
 
+export type AlertProps = Readonly<{
+  variant?: AlertVariant;
+  children: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}>;
+
 export function Alert({
   variant = 'error',
   children,
   style,
-}: {
-  variant?: AlertVariant;
-  children: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
+}: AlertProps) {
   const theme = useTheme();
   const color = variant === 'error' ? theme.error : theme.success;
   const bg = variant === 'error' ? theme.errorBg : theme.successBg;

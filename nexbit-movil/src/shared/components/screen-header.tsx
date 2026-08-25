@@ -4,17 +4,19 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Spacing } from '@/shared/constants/theme';
 
+export type ScreenHeaderProps = Readonly<{
+  title: string;
+  subtitle?: string;
+  right?: React.ReactNode;
+  style?: StyleProp<ViewStyle>;
+}>;
+
 export function ScreenHeader({
   title,
   subtitle,
   right,
   style,
-}: {
-  title: string;
-  subtitle?: string;
-  right?: React.ReactNode;
-  style?: StyleProp<ViewStyle>;
-}) {
+}: ScreenHeaderProps) {
   return (
     <ThemedView style={[styles.header, style]}>
       <ThemedView style={styles.textos}>
