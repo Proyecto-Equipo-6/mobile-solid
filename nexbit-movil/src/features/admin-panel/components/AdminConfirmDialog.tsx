@@ -6,7 +6,7 @@ import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
-type AdminConfirmDialogProps = {
+type AdminConfirmDialogProps = Readonly<{
   visible: boolean;
   title: string;
   message: string;
@@ -14,7 +14,7 @@ type AdminConfirmDialogProps = {
   isLoading?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
-};
+}>;
 
 export function AdminConfirmDialog({
   visible,
