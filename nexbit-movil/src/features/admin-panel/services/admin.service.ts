@@ -140,17 +140,26 @@ export async function listAdminOrders(): Promise<AdminOrder[]> {
   return ordersArray.map(mapPedidoAdminToAdminOrder);
 }
 
+function extractArrayFromResponse<T>(data: unknown): T[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if ('items' in data && Array.isArray((data as { items: unknown }).items)) {
+      return (data as { items: T[] }).items;
+    }
+    if ('repartidores' in data && Array.isArray((data as { repartidores: unknown }).repartidores)) {
+      return (data as { repartidores: T[] }).repartidores;
+    }
+  }
+  return [];
+}
+
 export async function listDrivers(): Promise<DriverOption[]> {
   const data = await api.get<BackendRepartidor[] | { items: BackendRepartidor[] } | { repartidores: BackendRepartidor[] }>('/admin/repartidores');
-  const repartidoresList = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.items)
-      ? data.items
-      : Array.isArray(data?.repartidores)
-        ? data.repartidores
-        : [];
+  const repartidoresList = extractArrayFromResponse<BackendRepartidor>(data);
+
   console.log('[listDrivers] Raw response:', data);
   console.log('[listDrivers] Extracted list:', repartidoresList);
+
   return repartidoresList.map(mapRepartidorToDriver);
 }
 

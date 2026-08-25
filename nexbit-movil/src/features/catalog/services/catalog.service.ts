@@ -7,15 +7,23 @@ import type {
 } from '@/features/catalog/types/catalog.types';
 import { mapProductoToProduct } from '@/features/catalog/types/catalog.types';
 
+function extractProductsArray(data: unknown): BackendProducto[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object') {
+    if ('items' in data && Array.isArray((data as { items: unknown }).items)) {
+      return (data as { items: BackendProducto[] }).items;
+    }
+    if ('productos' in data && Array.isArray((data as { productos: unknown }).productos)) {
+      return (data as { productos: BackendProducto[] }).productos;
+    }
+  }
+  return [];
+}
+
 export async function listProducts(): Promise<Product[]> {
   const data = await api.get<BackendProducto[] | { items: BackendProducto[] } | { productos: BackendProducto[] }>('/productos/publico');
-  const productosList = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.items)
-      ? data.items
-      : Array.isArray(data?.productos)
-        ? data.productos
-        : [];
+  const productosList = extractProductsArray(data);
+
   return productosList.map(mapProductoToProduct);
 }
 
