@@ -64,20 +64,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const user = await authService.login({ email, password });
       setUser(user);
-    } catch (error) {
-      // El error se propaga a la UI para mostrar mensaje
-      throw error;
     } finally {
       setIsLoading(false);
     }
   }, []);
 
   const register = useCallback(async (payload: RegisterPayload) => {
-    try {
-      await authService.register(payload);
-    } catch (error) {
-      throw error;
-    }
+    await authService.register(payload);
   }, []);
 
   const signOut = useCallback(async () => {

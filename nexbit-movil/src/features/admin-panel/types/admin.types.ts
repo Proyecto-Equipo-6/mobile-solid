@@ -12,7 +12,7 @@ export type BackendRepartidor = {
   telefono?: string;
   email?: string;
   direccion?: string;
-  estado: 'DISPONIBLE' | 'INACTIVO' | string;
+  estado: string;
 };
 
 export type DriverOption = {

@@ -7,11 +7,11 @@ import { Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 import { formatCurrency } from '@/shared/utils/format';
 
-type CartItemProps = {
+type CartItemProps = Readonly<{
   item: CartItemModel;
   onRemove: () => void;
   onChangeQuantity: (quantity: number) => void;
-};
+}>;
 
 export function CartItem({ item, onRemove, onChangeQuantity }: CartItemProps) {
   const theme = useTheme();
