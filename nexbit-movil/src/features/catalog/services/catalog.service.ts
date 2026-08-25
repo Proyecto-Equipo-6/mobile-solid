@@ -32,15 +32,19 @@ export async function getProduct(id: string): Promise<Product> {
   return mapProductoToProduct(data);
 }
 
+function extractCategoriesArray(data: unknown): { id_categoria: number | string; nombre: string; descripcion?: string; estado: number }[] {
+  if (Array.isArray(data)) return data;
+  if (data && typeof data === 'object' && 'categorias' in data && Array.isArray((data as { categorias: unknown }).categorias)) {
+    return (data as { categorias: { id_categoria: number | string; nombre: string; descripcion?: string; estado: number }[] }).categorias;
+  }
+  return [];
+}
+
 export async function listCategories(): Promise<Category[]> {
   const data = await api.get<
     { id_categoria: number | string; nombre: string; descripcion?: string; estado: number }[] | { categorias: { id_categoria: number | string; nombre: string; descripcion?: string; estado: number }[] }
   >('/categorias');
-  const categoriasList = Array.isArray(data)
-    ? data
-    : Array.isArray(data?.categorias)
-      ? data.categorias
-      : [];
+  const categoriasList = extractCategoriesArray(data);
   return categoriasList
     .filter((categoria) => Number(categoria.estado) === 1)
     .map((categoria) => ({

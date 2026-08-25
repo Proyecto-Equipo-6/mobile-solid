@@ -163,12 +163,22 @@ function DeliveryActionControls({
 }) {
   const dash = useDashTheme();
   const isEntregado = selectedStatus === 'ENTREGADO';
+
+  let comprobanteButtonLabel: string;
+  if (isUploading) {
+    comprobanteButtonLabel = 'Subiendo…';
+  } else if (comprobanteUploaded) {
+    comprobanteButtonLabel = 'Comprobante subido ✓';
+  } else {
+    comprobanteButtonLabel = 'Subir comprobante';
+  }
+
   return (
     <ThemedView style={styles.actionsSection}>
       {isEntregado && (
         <ThemedView style={styles.comprobanteSection}>
           <Button
-            label={isUploading ? 'Subiendo…' : comprobanteUploaded ? 'Comprobante subido ✓' : 'Subir comprobante'}
+            label={comprobanteButtonLabel}
             variant={comprobanteUploaded ? 'secondary' : 'primary'}
             pill
             loading={isUploading}

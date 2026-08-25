@@ -48,20 +48,23 @@ export function Button({
 
   const textColor: ThemeColor = variant === 'danger' ? 'error' : 'sobreAccent';
 
+  let content: React.ReactNode = children;
+  if (loading) {
+    content = <ActivityIndicator color={variant === 'secondary' ? theme.text : theme.sobreAccent} />;
+  } else if (label) {
+    content = (
+      <ThemedText
+        type="smallBold"
+        themeColor={variant === 'secondary' ? 'text' : textColor}
+        style={styles.label}>
+        {label}
+      </ThemedText>
+    );
+  }
+
   return (
     <Pressable disabled={disabled || loading} style={containerStyle} {...rest}>
-      {loading ? (
-        <ActivityIndicator color={variant === 'secondary' ? theme.text : theme.sobreAccent} />
-      ) : label ? (
-        <ThemedText
-          type="smallBold"
-          themeColor={variant === 'secondary' ? 'text' : textColor}
-          style={styles.label}>
-          {label}
-        </ThemedText>
-      ) : (
-        children
-      )}
+      {content}
     </Pressable>
   );
 }

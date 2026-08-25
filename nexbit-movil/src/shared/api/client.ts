@@ -120,7 +120,7 @@ function buildFetchOptions(options: RequestOptions, timeoutMs: number): {
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const url = `${API_BASE_URL}${path}${toQueryString(options.query ?? {})}`;
 
-  const { controller, timeoutId, init } = buildFetchOptions(options, REQUEST_TIMEOUT_MS);
+  const { timeoutId, init } = buildFetchOptions(options, REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, init);
@@ -173,7 +173,7 @@ async function requestForm<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}${path}${toQueryString(options.query ?? {})}`;
 
-  const { controller, timeoutId, init } = buildFetchOptions({ method: 'POST' }, REQUEST_TIMEOUT_MS);
+  const { timeoutId, init } = buildFetchOptions({ method: 'POST' }, REQUEST_TIMEOUT_MS);
 
   try {
     const response = await fetch(url, {
