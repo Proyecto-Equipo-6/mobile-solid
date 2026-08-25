@@ -1,4 +1,4 @@
-import { ActivityIndicator, Pressable, StyleSheet, TextInput } from 'react-native';
+import { Pressable, StyleSheet, TextInput } from 'react-native';
 
 import type { DeliveryOrder } from '@/features/delivery/types/delivery.types';
 import { Button } from '@/shared/components/button';
