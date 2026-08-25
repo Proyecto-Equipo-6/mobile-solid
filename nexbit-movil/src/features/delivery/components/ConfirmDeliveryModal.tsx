@@ -26,7 +26,23 @@ type ConfirmDeliveryModalProps = Readonly<{
 
 type Modo = 'entregado' | 'no_entregado';
 
-function OrderInfo({ order }: Readonly<{ order: DeliveryOrder }>) {
+type OrderInfoProps = Readonly<{
+  order: DeliveryOrder;
+}>;
+
+type ModoSelectorProps = Readonly<{
+  modo: Modo;
+  onSelect: (m: Modo) => void;
+}>;
+
+type ComprobanteSectionProps = Readonly<{
+  imagen: PickedImage | null;
+  isUploading: boolean;
+  comprobanteUrl: string | null;
+  onPickImage: (origen: 'camera' | 'library') => void;
+}>;
+
+function OrderInfo({ order }: OrderInfoProps) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.datos}>
@@ -48,7 +64,7 @@ function OrderInfo({ order }: Readonly<{ order: DeliveryOrder }>) {
   );
 }
 
-function ModoSelector({ modo, onSelect }: Readonly<{ modo: Modo; onSelect: (m: Modo) => void }>) {
+function ModoSelector({ modo, onSelect }: ModoSelectorProps) {
   const dash = useDashTheme();
   const options: { value: Modo; label: string }[] = [
     { value: 'entregado', label: 'Entregado' },
@@ -80,12 +96,7 @@ function ComprobanteSection({
   isUploading,
   comprobanteUrl,
   onPickImage,
-}: Readonly<{
-  imagen: PickedImage | null;
-  isUploading: boolean;
-  comprobanteUrl: string | null;
-  onPickImage: (origen: 'camera' | 'library') => void;
-}>) {
+}: ComprobanteSectionProps) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.foto}>
