@@ -9,7 +9,7 @@ import { Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { formatCurrency, formatDateTime } from '@/shared/utils/format';
 
-type DeliveryOrderCardProps = {
+type DeliveryOrderCardProps = Readonly<{
   order: DeliveryOrder;
   isStarting?: boolean;
   onStart?: () => void;
@@ -22,9 +22,46 @@ type DeliveryOrderCardProps = {
   onObservationChange?: (text: string) => void;
   onConfirm?: () => void;
   isConfirming?: boolean;
-};
+}>;
 
-function OrderHeader({ order }: { order: DeliveryOrder }) {
+type OrderHeaderProps = Readonly<{
+  order: DeliveryOrder;
+}>;
+
+type OrderAddressProps = Readonly<{
+  order: DeliveryOrder;
+}>;
+
+type OrderProductsProps = Readonly<{
+  products: NonNullable<DeliveryOrder['products']>;
+}>;
+
+type OrderTotalProps = Readonly<{
+  total: number;
+}>;
+
+type StartDeliveryButtonProps = Readonly<{
+  isStarting: boolean;
+  onStart: () => void;
+}>;
+
+type DeliveryStatusChipsProps = Readonly<{
+  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO' | null;
+  onSelect: (status: 'ENTREGADO' | 'NO_ENTREGADO') => void;
+}>;
+
+type DeliveryActionControlsProps = Readonly<{
+  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO';
+  isUploading: boolean;
+  comprobanteUploaded: boolean;
+  onUploadComprobante: () => void;
+  observation: string;
+  onObservationChange: (text: string) => void;
+  isConfirming: boolean;
+  onConfirm: () => void;
+}>;
+
+function OrderHeader({ order }: OrderHeaderProps) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.header}>
@@ -41,7 +78,7 @@ function OrderHeader({ order }: { order: DeliveryOrder }) {
   );
 }
 
-function OrderAddress({ order }: { order: DeliveryOrder }) {
+function OrderAddress({ order }: OrderAddressProps) {
   const dash = useDashTheme();
   return (
     <>
@@ -57,7 +94,7 @@ function OrderAddress({ order }: { order: DeliveryOrder }) {
   );
 }
 
-function OrderProducts({ products }: { products: NonNullable<DeliveryOrder['products']> }) {
+function OrderProducts({ products }: OrderProductsProps) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.productsSection}>
@@ -78,7 +115,7 @@ function OrderProducts({ products }: { products: NonNullable<DeliveryOrder['prod
   );
 }
 
-function OrderTotal({ total }: { total: number }) {
+function OrderTotal({ total }: OrderTotalProps) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.recaudo}>
@@ -95,10 +132,7 @@ function OrderTotal({ total }: { total: number }) {
 function StartDeliveryButton({
   isStarting,
   onStart,
-}: {
-  isStarting: boolean;
-  onStart: () => void;
-}) {
+}: StartDeliveryButtonProps) {
   return (
     <ThemedView style={styles.footerFull}>
       <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
@@ -109,10 +143,7 @@ function StartDeliveryButton({
 function DeliveryStatusChips({
   selectedStatus,
   onSelect,
-}: {
-  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO' | null;
-  onSelect: (status: 'ENTREGADO' | 'NO_ENTREGADO') => void;
-}) {
+}: DeliveryStatusChipsProps) {
   const dash = useDashTheme();
   const chips: { value: 'ENTREGADO' | 'NO_ENTREGADO'; label: string; color: string }[] = [
     { value: 'ENTREGADO', label: 'Entregado', color: '#16a34a' },
@@ -151,16 +182,7 @@ function DeliveryActionControls({
   onObservationChange,
   isConfirming,
   onConfirm,
-}: {
-  selectedStatus: 'ENTREGADO' | 'NO_ENTREGADO';
-  isUploading: boolean;
-  comprobanteUploaded: boolean;
-  onUploadComprobante: () => void;
-  observation: string;
-  onObservationChange: (text: string) => void;
-  isConfirming: boolean;
-  onConfirm: () => void;
-}) {
+}: DeliveryActionControlsProps) {
   const dash = useDashTheme();
   const isEntregado = selectedStatus === 'ENTREGADO';
 
