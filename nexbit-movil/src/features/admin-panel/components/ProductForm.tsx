@@ -119,6 +119,7 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
   ];
 
   const isEditing = Boolean(initialData);
+  const activeImageUri = previewUri ?? imageUrl;
 
   return (
     <ThemedView style={[styles.form, { backgroundColor: dash.card, borderColor: dash.border }]}>
@@ -218,10 +219,8 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         Imagen del producto
       </ThemedText>
       <ThemedView style={styles.imagenRow}>
-        {imageUrl && !previewUri ? (
-          <Image source={{ uri: imageUrl }} style={styles.preview} resizeMode="cover" />
-        ) : previewUri ? (
-          <Image source={{ uri: previewUri }} style={styles.preview} resizeMode="cover" />
+        {activeImageUri ? (
+          <Image source={{ uri: activeImageUri }} style={styles.preview} resizeMode="cover" />
         ) : null}
         <ThemedView style={styles.imagenAcciones}>
           <Button
