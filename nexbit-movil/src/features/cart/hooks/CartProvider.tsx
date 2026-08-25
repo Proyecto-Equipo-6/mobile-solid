@@ -16,13 +16,13 @@ type CartContextValue = {
 
 const CartContext = createContext<CartContextValue | undefined>(undefined);
 
-export function CartProvider({ children }: { children: React.ReactNode }) {
+export function CartProvider({ children }: Readonly<{ children: React.ReactNode }>) {
   const [items, setItems] = useState<CartItem[]>([]);
 
   const addItem = useCallback((product: Omit<CartItem, 'quantity'>) => {
     setItems((current) => {
-      const existing = current.find((item) => item.productId === product.productId);
-      if (existing) {
+      const exists = current.some((item) => item.productId === product.productId);
+      if (exists) {
         return current.map((item) =>
           item.productId === product.productId
             ? { ...item, quantity: item.quantity + 1 }

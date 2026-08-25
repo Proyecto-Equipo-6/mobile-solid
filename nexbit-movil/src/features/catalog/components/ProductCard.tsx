@@ -9,10 +9,10 @@ import { Radius, Spacing, Shadows } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 import { formatCurrency } from '@/shared/utils/format';
 
-type ProductCardProps = {
+type ProductCardProps = Readonly<{
   product: Product;
   categoryName?: string;
-};
+}>;
 
 export function ProductCard({ product, categoryName }: ProductCardProps) {
   const router = useRouter();

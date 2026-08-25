@@ -8,11 +8,11 @@ import { Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 import { formatCurrency } from '@/shared/utils/format';
 
-type CheckoutSummaryProps = {
+type CheckoutSummaryProps = Readonly<{
   totals: CartTotals;
   isSubmitting?: boolean;
   onCheckout: () => void;
-};
+}>;
 
 export function CheckoutSummary({ totals, isSubmitting, onCheckout }: CheckoutSummaryProps) {
   const theme = useTheme();
@@ -29,7 +29,7 @@ export function CheckoutSummary({ totals, isSubmitting, onCheckout }: CheckoutSu
   );
 }
 
-function SummaryRow({ label, value, strong }: { label: string; value: string; strong?: boolean }) {
+function SummaryRow({ label, value, strong }: Readonly<{ label: string; value: string; strong?: boolean }>) {
   return (
     <ThemedView style={styles.row}>
       <ThemedText type={strong ? 'smallBold' : 'small'} themeColor={strong ? 'text' : 'textSecondary'}>

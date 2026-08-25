@@ -6,11 +6,11 @@ import { ThemedView } from '@/shared/components/themed-view';
 import { Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
 
-type CategoryFilterProps = {
+type CategoryFilterProps = Readonly<{
   categories: Category[];
   selectedCategory?: string;
   onSelect: (categoryId?: string) => void;
-};
+}>;
 
 export function CategoryFilter({ categories, selectedCategory, onSelect }: CategoryFilterProps) {
   return (
@@ -32,11 +32,11 @@ function Chip({
   label,
   selected,
   onPress,
-}: {
+}: Readonly<{
   label: string;
   selected: boolean;
   onPress: () => void;
-}) {
+}>) {
   const theme = useTheme();
 
   return (
