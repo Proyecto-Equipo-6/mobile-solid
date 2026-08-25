@@ -17,16 +17,16 @@ import { pickImage, type PickedImage } from '@/shared/utils/imagePicker';
 
 const MAX_TAMANO_FOTO = 3 * 1024 * 1024;
 
-type ConfirmDeliveryModalProps = {
+type ConfirmDeliveryModalProps = Readonly<{
   visible: boolean;
   order: DeliveryOrder | null;
   onClose: () => void;
   onDone: () => void;
-};
+}>;
 
 type Modo = 'entregado' | 'no_entregado';
 
-function OrderInfo({ order }: { order: DeliveryOrder }) {
+function OrderInfo({ order }: Readonly<{ order: DeliveryOrder }>) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.datos}>
@@ -48,7 +48,7 @@ function OrderInfo({ order }: { order: DeliveryOrder }) {
   );
 }
 
-function ModoSelector({ modo, onSelect }: { modo: Modo; onSelect: (m: Modo) => void }) {
+function ModoSelector({ modo, onSelect }: Readonly<{ modo: Modo; onSelect: (m: Modo) => void }>) {
   const dash = useDashTheme();
   const options: { value: Modo; label: string }[] = [
     { value: 'entregado', label: 'Entregado' },
@@ -80,12 +80,12 @@ function ComprobanteSection({
   isUploading,
   comprobanteUrl,
   onPickImage,
-}: {
+}: Readonly<{
   imagen: PickedImage | null;
   isUploading: boolean;
   comprobanteUrl: string | null;
   onPickImage: (origen: 'camera' | 'library') => void;
-}) {
+}>) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.foto}>
