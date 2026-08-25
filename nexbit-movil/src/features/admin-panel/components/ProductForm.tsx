@@ -15,11 +15,11 @@ import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { pickImage } from '@/shared/utils/imagePicker';
 import { resolveImageUrl } from '@/shared/utils/imageUrl';
 
-type ProductFormProps = {
+type ProductFormProps = Readonly<{
   onSubmit: (payload: CreateProductPayload) => Promise<unknown>;
   onCancel: () => void;
   initialData?: CreateProductPayload;
-};
+}>;
 
 export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProps) {
   const dash = useDashTheme();
