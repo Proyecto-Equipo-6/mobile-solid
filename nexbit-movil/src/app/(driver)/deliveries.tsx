@@ -122,30 +122,33 @@ export default function DeliveriesScreen() {
     }
   }
 
-  function getActiveOrderProps(item: DeliveryOrder) {
-    if (item.id !== activeOrder?.id) {
-      return {};
-    }
-    return {
-      onStatusSelect: (s: 'ENTREGADO' | 'NO_ENTREGADO') => setSelectedStatus(s),
-      selectedStatus,
-      onUploadComprobante: handleUploadComprobante,
-      isUploading,
-      comprobanteUploaded: Boolean(comprobanteUrl),
-      observation,
-      onObservationChange: setObservation,
-      onConfirm: handleConfirm,
-      isConfirming,
-    };
-  }
-
   function renderDeliveryOrder({ item }: { item: DeliveryOrder }) {
+    const isActive = item.id === activeOrder?.id;
+
+    if (!isActive) {
+      return (
+        <DeliveryOrderCard
+          order={item}
+          isStarting={startingOrderId === item.id}
+          onStart={() => handleStart(item)}
+        />
+      );
+    }
+
     return (
       <DeliveryOrderCard
         order={item}
         isStarting={startingOrderId === item.id}
         onStart={() => handleStart(item)}
-        {...getActiveOrderProps(item)}
+        onStatusSelect={setSelectedStatus}
+        selectedStatus={selectedStatus}
+        onUploadComprobante={handleUploadComprobante}
+        isUploading={isUploading}
+        comprobanteUploaded={Boolean(comprobanteUrl)}
+        observation={observation}
+        onObservationChange={setObservation}
+        onConfirm={handleConfirm}
+        isConfirming={isConfirming}
       />
     );
   }

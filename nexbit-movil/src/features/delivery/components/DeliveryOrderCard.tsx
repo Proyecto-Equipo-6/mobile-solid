@@ -24,20 +24,53 @@ type DeliveryOrderCardProps = {
   isConfirming?: boolean;
 };
 
-function OrderProductsList({ products }: { products: NonNullable<DeliveryOrder['products']> }) {
+function OrderHeader({ order }: { order: DeliveryOrder }) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.header}>
+      <ThemedView style={styles.headerInfo}>
+        <ThemedText type="smallBold" style={{ color: dash.text }}>
+          {order.customerName}
+        </ThemedText>
+        <ThemedText type="small" style={{ color: dash.textSecondary }}>
+          {formatDateTime(order.createdAt)}
+        </ThemedText>
+      </ThemedView>
+      <Pill label={STATUS_LABELS[order.status] ?? order.status} color={STATUS_COLORS[order.status]} />
+    </ThemedView>
+  );
+}
+
+function OrderAddress({ order }: { order: DeliveryOrder }) {
+  const dash = useDashTheme();
+  return (
+    <>
+      <ThemedText type="small" style={{ color: dash.textSecondary }}>
+        {order.address}
+      </ThemedText>
+      {order.customerPhone && (
+        <ThemedText type="small" style={{ color: dash.textSecondary }}>
+          {order.customerPhone}
+        </ThemedText>
+      )}
+    </>
+  );
+}
+
+function OrderProducts({ products }: { products: NonNullable<DeliveryOrder['products']> }) {
   const dash = useDashTheme();
   return (
     <ThemedView style={styles.productsSection}>
       <ThemedText type="smallBold" style={{ color: dash.text }}>
         Productos:
       </ThemedText>
-      {products.map((product) => (
-        <ThemedView key={product.id} style={styles.productRow}>
+      {products.map((p) => (
+        <ThemedView key={p.id} style={styles.productRow}>
           <ThemedText type="small" style={[styles.productName, { color: dash.textSecondary }]}>
-            {product.quantity}x {product.name}
+            {p.quantity}x {p.name}
           </ThemedText>
           <ThemedText type="small" style={{ color: dash.textSecondary }}>
-            {formatCurrency(product.subtotal)}
+            {formatCurrency(p.subtotal)}
           </ThemedText>
         </ThemedView>
       ))}
@@ -45,7 +78,35 @@ function OrderProductsList({ products }: { products: NonNullable<DeliveryOrder['
   );
 }
 
-function DeliveryStatusSelector({
+function OrderTotal({ total }: { total: number }) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.recaudo}>
+      <ThemedText type="small" style={{ color: dash.textMuted }}>
+        Total a cobrar
+      </ThemedText>
+      <ThemedText type="smallBold" style={{ color: dash.text }}>
+        {formatCurrency(total)}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+function StartDeliveryButton({
+  isStarting,
+  onStart,
+}: {
+  isStarting: boolean;
+  onStart: () => void;
+}) {
+  return (
+    <ThemedView style={styles.footerFull}>
+      <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
+    </ThemedView>
+  );
+}
+
+function DeliveryStatusChips({
   selectedStatus,
   onSelect,
 }: {
@@ -53,46 +114,35 @@ function DeliveryStatusSelector({
   onSelect: (status: 'ENTREGADO' | 'NO_ENTREGADO') => void;
 }) {
   const dash = useDashTheme();
+  const chips: { value: 'ENTREGADO' | 'NO_ENTREGADO'; label: string; color: string }[] = [
+    { value: 'ENTREGADO', label: 'Entregado', color: '#16a34a' },
+    { value: 'NO_ENTREGADO', label: 'No entregado', color: '#dc2626' },
+  ];
   return (
     <ThemedView style={styles.statusRow}>
-      <Pressable onPress={() => onSelect('ENTREGADO')}>
-        <ThemedView
-          style={[
-            styles.statusChip,
-            {
-              backgroundColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.cardHover,
-              borderColor: selectedStatus === 'ENTREGADO' ? '#16a34a' : dash.border,
-            },
-          ]}>
-          <ThemedText
-            type="smallBold"
-            style={{ color: selectedStatus === 'ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
-            Entregado
-          </ThemedText>
-        </ThemedView>
-      </Pressable>
-
-      <Pressable onPress={() => onSelect('NO_ENTREGADO')}>
-        <ThemedView
-          style={[
-            styles.statusChip,
-            {
-              backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.cardHover,
-              borderColor: selectedStatus === 'NO_ENTREGADO' ? '#dc2626' : dash.border,
-            },
-          ]}>
-          <ThemedText
-            type="smallBold"
-            style={{ color: selectedStatus === 'NO_ENTREGADO' ? '#ffffff' : dash.textSecondary }}>
-            No entregado
-          </ThemedText>
-        </ThemedView>
-      </Pressable>
+      {chips.map((chip) => (
+        <Pressable key={chip.value} onPress={() => onSelect(chip.value)}>
+          <ThemedView
+            style={[
+              styles.statusChip,
+              {
+                backgroundColor: selectedStatus === chip.value ? chip.color : dash.cardHover,
+                borderColor: selectedStatus === chip.value ? chip.color : dash.border,
+              },
+            ]}>
+            <ThemedText
+              type="smallBold"
+              style={{ color: selectedStatus === chip.value ? '#ffffff' : dash.textSecondary }}>
+              {chip.label}
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
+      ))}
     </ThemedView>
   );
 }
 
-function DeliveryActionsSection({
+function DeliveryActionControls({
   selectedStatus,
   isUploading,
   comprobanteUploaded,
@@ -112,9 +162,10 @@ function DeliveryActionsSection({
   onConfirm: () => void;
 }) {
   const dash = useDashTheme();
+  const isEntregado = selectedStatus === 'ENTREGADO';
   return (
     <ThemedView style={styles.actionsSection}>
-      {selectedStatus === 'ENTREGADO' && (
+      {isEntregado && (
         <ThemedView style={styles.comprobanteSection}>
           <Button
             label={isUploading ? 'Subiendo…' : comprobanteUploaded ? 'Comprobante subido ✓' : 'Subir comprobante'}
@@ -127,7 +178,7 @@ function DeliveryActionsSection({
         </ThemedView>
       )}
 
-      {selectedStatus === 'NO_ENTREGADO' && (
+      {!isEntregado && (
         <TextInput
           value={observation}
           onChangeText={onObservationChange}
@@ -145,7 +196,7 @@ function DeliveryActionsSection({
           loading={isConfirming}
           disabled={isConfirming || isUploading}
           onPress={onConfirm}
-          style={{ backgroundColor: selectedStatus === 'NO_ENTREGADO' ? '#7f1d1d' : dash.accent }}
+          style={{ backgroundColor: !isEntregado ? '#7f1d1d' : dash.accent }}
         />
       </ThemedView>
     </ThemedView>
@@ -168,54 +219,22 @@ export function DeliveryOrderCard({
 }: DeliveryOrderCardProps) {
   const dash = useDashTheme();
   const isAssigned = order.status === 'assigned';
-  const isInTransit = order.status === 'in_transit';
-  const isPendingAction = isAssigned || isInTransit;
-  const hasProducts = order.products && order.products.length > 0;
+  const isActive = isAssigned || order.status === 'in_transit';
+  const showStartButton = isAssigned && onStart && !onStatusSelect;
+  const showStatusSection = isActive && onStatusSelect;
 
   return (
     <ThemedView style={[styles.card, { backgroundColor: dash.card, borderColor: dash.border }]}>
-      <ThemedView style={styles.header}>
-        <ThemedView style={styles.headerInfo}>
-          <ThemedText type="smallBold" style={{ color: dash.text }}>
-            {order.customerName}
-          </ThemedText>
-          <ThemedText type="small" style={{ color: dash.textSecondary }}>
-            {formatDateTime(order.createdAt)}
-          </ThemedText>
-        </ThemedView>
-        <Pill
-          label={STATUS_LABELS[order.status] ?? order.status}
-          color={STATUS_COLORS[order.status]}
-        />
-      </ThemedView>
+      <OrderHeader order={order} />
+      <OrderAddress order={order} />
 
-      <ThemedText type="small" style={{ color: dash.textSecondary }}>
-        {order.address}
-      </ThemedText>
-      {order.customerPhone && (
-        <ThemedText type="small" style={{ color: dash.textSecondary }}>
-          {order.customerPhone}
-        </ThemedText>
-      )}
+      {order.products && order.products.length > 0 && <OrderProducts products={order.products} />}
 
-      {hasProducts && <OrderProductsList products={order.products!} />}
+      <OrderTotal total={order.total} />
 
-      <ThemedView style={styles.recaudo}>
-        <ThemedText type="small" style={{ color: dash.textMuted }}>
-          Total a cobrar
-        </ThemedText>
-        <ThemedText type="smallBold" style={{ color: dash.text }}>
-          {formatCurrency(order.total)}
-        </ThemedText>
-      </ThemedView>
+      {showStartButton && <StartDeliveryButton isStarting={isStarting ?? false} onStart={onStart} />}
 
-      {isAssigned && onStart && !onStatusSelect && (
-        <ThemedView style={styles.footerFull}>
-          <Button label={isStarting ? 'Iniciando…' : 'Iniciar entrega'} pill loading={isStarting} onPress={onStart} />
-        </ThemedView>
-      )}
-
-      {isPendingAction && onStatusSelect && (
+      {showStatusSection && (
         <ThemedView style={styles.statusSection}>
           {isAssigned && onStart && (
             <ThemedView style={styles.startRow}>
@@ -227,10 +246,10 @@ export function DeliveryOrderCard({
             Estado del pedido:
           </ThemedText>
 
-          <DeliveryStatusSelector selectedStatus={selectedStatus ?? null} onSelect={onStatusSelect} />
+          <DeliveryStatusChips selectedStatus={selectedStatus ?? null} onSelect={onStatusSelect} />
 
           {selectedStatus && (
-            <DeliveryActionsSection
+            <DeliveryActionControls
               selectedStatus={selectedStatus}
               isUploading={isUploading ?? false}
               comprobanteUploaded={comprobanteUploaded ?? false}

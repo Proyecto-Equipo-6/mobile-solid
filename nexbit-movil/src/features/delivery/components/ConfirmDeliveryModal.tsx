@@ -26,6 +26,99 @@ type ConfirmDeliveryModalProps = {
 
 type Modo = 'entregado' | 'no_entregado';
 
+function OrderInfo({ order }: { order: DeliveryOrder }) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.datos}>
+      <ThemedText type="smallBold" style={{ color: dash.text }}>
+        {order.customerName}
+      </ThemedText>
+      <ThemedText type="small" style={{ color: dash.textSecondary }}>
+        {order.address}
+      </ThemedText>
+      {order.customerPhone && (
+        <ThemedText type="small" style={{ color: dash.textSecondary }}>
+          {order.customerPhone}
+        </ThemedText>
+      )}
+      <ThemedText type="smallBold" style={{ color: dash.text }}>
+        Total a cobrar: {formatCurrency(order.total)}
+      </ThemedText>
+    </ThemedView>
+  );
+}
+
+function ModoSelector({ modo, onSelect }: { modo: Modo; onSelect: (m: Modo) => void }) {
+  const dash = useDashTheme();
+  const options: { value: Modo; label: string }[] = [
+    { value: 'entregado', label: 'Entregado' },
+    { value: 'no_entregado', label: 'No entregado' },
+  ];
+  return (
+    <ThemedView style={styles.modoRow}>
+      {options.map((opt) => (
+        <Pressable key={opt.value} onPress={() => onSelect(opt.value)}>
+          <ThemedView
+            style={[
+              styles.modoChip,
+              { backgroundColor: modo === opt.value ? dash.accent : dash.cardHover, borderColor: dash.border },
+            ]}>
+            <ThemedText
+              type="smallBold"
+              style={{ color: modo === opt.value ? dash.sobreAccent : dash.textSecondary }}>
+              {opt.label}
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
+      ))}
+    </ThemedView>
+  );
+}
+
+function ComprobanteSection({
+  imagen,
+  isUploading,
+  comprobanteUrl,
+  onPickImage,
+}: {
+  imagen: PickedImage | null;
+  isUploading: boolean;
+  comprobanteUrl: string | null;
+  onPickImage: (origen: 'camera' | 'library') => void;
+}) {
+  const dash = useDashTheme();
+  return (
+    <ThemedView style={styles.foto}>
+      {imagen ? (
+        <Image source={{ uri: imagen.uri }} style={styles.preview} resizeMode="cover" />
+      ) : (
+        <ThemedView style={[styles.preview, { backgroundColor: dash.cardHover, justifyContent: 'center', alignItems: 'center' }]}>
+          <ThemedText type="small" style={{ color: dash.textMuted }}>
+            Sin foto de comprobante
+          </ThemedText>
+        </ThemedView>
+      )}
+      {isUploading && (
+        <ThemedView style={styles.uploadingRow}>
+          <ActivityIndicator size="small" color={dash.accent} />
+          <ThemedText type="small" style={{ color: dash.textSecondary }}>
+            Subiendo comprobante (POST /pedidos/:id/comprobante)...
+          </ThemedText>
+        </ThemedView>
+      )}
+      {comprobanteUrl && (
+        <ThemedText type="small" style={{ color: '#22c55e' }}>
+          ✓ Comprobante subido con éxito
+        </ThemedText>
+      )}
+      <ThemedView style={styles.fotoAcciones}>
+        <Button label="Tomar foto" pill onPress={() => onPickImage('camera')} disabled={isUploading} />
+        <Button label="Galería" variant="secondary" pill onPress={() => onPickImage('library')} disabled={isUploading} />
+      </ThemedView>
+    </ThemedView>
+  );
+}
+
 export function ConfirmDeliveryModal({ visible, order, onClose, onDone }: ConfirmDeliveryModalProps) {
   const dash = useDashTheme();
   const [modo, setModo] = useState<Modo>('entregado');
@@ -69,9 +162,7 @@ export function ConfirmDeliveryModal({ visible, order, onClose, onDone }: Confir
   }
 
   async function handleConfirm() {
-    if (isSubmitting || isUploading || !order) {
-      return;
-    }
+    if (isSubmitting || isUploading || !order) return;
     setError(null);
 
     if (modo === 'entregado' && !comprobanteUrl) {
@@ -115,89 +206,17 @@ export function ConfirmDeliveryModal({ visible, order, onClose, onDone }: Confir
             {modo === 'entregado' ? 'Confirmar entrega' : 'Entrega no realizada'}
           </ThemedText>
 
-          {order ? (
-            <ThemedView style={styles.datos}>
-              <ThemedText type="smallBold" style={{ color: dash.text }}>
-                {order.customerName}
-              </ThemedText>
-              <ThemedText type="small" style={{ color: dash.textSecondary }}>
-                {order.address}
-              </ThemedText>
-              {order.customerPhone ? (
-                <ThemedText type="small" style={{ color: dash.textSecondary }}>
-                  {order.customerPhone}
-                </ThemedText>
-              ) : null}
-              <ThemedText type="smallBold" style={{ color: dash.text }}>
-                Total a cobrar: {formatCurrency(order.total)}
-              </ThemedText>
-            </ThemedView>
-          ) : null}
+          {order && <OrderInfo order={order} />}
 
-          <ThemedView style={styles.modoRow}>
-            <Pressable onPress={() => setModo('entregado')}>
-              <ThemedView
-                style={[
-                  styles.modoChip,
-                  {
-                    backgroundColor: modo === 'entregado' ? dash.accent : dash.cardHover,
-                    borderColor: dash.border,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: modo === 'entregado' ? dash.sobreAccent : dash.textSecondary }}>
-                  Entregado
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-            <Pressable onPress={() => setModo('no_entregado')}>
-              <ThemedView
-                style={[
-                  styles.modoChip,
-                  {
-                    backgroundColor: modo === 'no_entregado' ? dash.accent : dash.cardHover,
-                    borderColor: dash.border,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: modo === 'no_entregado' ? dash.sobreAccent : dash.textSecondary }}>
-                  No entregado
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          </ThemedView>
+          <ModoSelector modo={modo} onSelect={setModo} />
 
           {modo === 'entregado' ? (
-            <ThemedView style={styles.foto}>
-              {imagen ? (
-                <Image source={{ uri: imagen.uri }} style={styles.preview} resizeMode="cover" />
-              ) : (
-                <ThemedView style={[styles.preview, { backgroundColor: dash.cardHover, justifyContent: 'center', alignItems: 'center' }]}>
-                  <ThemedText type="small" style={{ color: dash.textMuted }}>
-                    Sin foto de comprobante
-                  </ThemedText>
-                </ThemedView>
-              )}
-              {isUploading ? (
-                <ThemedView style={styles.uploadingRow}>
-                  <ActivityIndicator size="small" color={dash.accent} />
-                  <ThemedText type="small" style={{ color: dash.textSecondary }}>
-                    Subiendo comprobante (POST /pedidos/:id/comprobante)...
-                  </ThemedText>
-                </ThemedView>
-              ) : null}
-              {comprobanteUrl ? (
-                <ThemedText type="small" style={{ color: '#22c55e' }}>
-                  ✓ Comprobante subido con éxito
-                </ThemedText>
-              ) : null}
-              <ThemedView style={styles.fotoAcciones}>
-                <Button label="Tomar foto" pill onPress={() => elegirImagen('camera')} disabled={isUploading} />
-                <Button label="Galería" variant="secondary" pill onPress={() => elegirImagen('library')} disabled={isUploading} />
-              </ThemedView>
-            </ThemedView>
+            <ComprobanteSection
+              imagen={imagen}
+              isUploading={isUploading}
+              comprobanteUrl={comprobanteUrl}
+              onPickImage={elegirImagen}
+            />
           ) : (
             <TextInput
               value={observacion}
@@ -209,11 +228,11 @@ export function ConfirmDeliveryModal({ visible, order, onClose, onDone }: Confir
             />
           )}
 
-          {error ? (
+          {error && (
             <ThemedText type="small" style={{ color: '#f87171' }}>
               {error}
             </ThemedText>
-          ) : null}
+          )}
 
           <ThemedView style={styles.acciones}>
             <Pressable onPress={onClose} disabled={isSubmitting || isUploading}>
