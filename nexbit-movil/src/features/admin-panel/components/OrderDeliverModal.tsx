@@ -130,7 +130,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
                     }}
                   >
                     {Platform.OS === 'web' && imagen.base64 ? (
-                      <img src={`data:${imagen.mimeType};base64,${imagen.base64}`} style={{ width: '100%', height: '100%' }} />
+                      <img src={`data:${imagen.mimeType};base64,${imagen.base64}`} alt="Comprobante de entrega" style={{ width: '100%', height: '100%' }} />
                     ) : (
                       <ThemedView style={{ width: '100%', height: '100%', backgroundColor: '#f0f0f0' }}>
                         <ThemedText style={{ color: dash.textSecondary, textAlign: 'center', marginTop: '40%' }}>
