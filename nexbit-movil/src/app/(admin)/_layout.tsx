@@ -12,6 +12,12 @@ function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; 
   return <Ionicons name={name} size={size} color={color} />;
 }
 
+function makeTabBarIcon(name: IoniconsName) {
+  return function TabBarIconWrapper(props: { color: string; size: number }) {
+    return <TabBarIcon name={name} {...props} />;
+  };
+}
+
 function HeaderSignOutButton({ onPress }: { onPress: () => void }) {
   return (
     <Ionicons
@@ -54,14 +60,14 @@ export default function AdminLayout() {
         sceneStyle: { backgroundColor: DashColors.bg },
         headerRight: () => <HeaderSignOutButton onPress={signOut} />,
       }}>
-      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: (props) => <TabBarIcon name="stats-chart-outline" {...props} /> }} />
-      <Tabs.Screen name="products" options={{ title: 'Productos', tabBarIcon: (props) => <TabBarIcon name="cube-outline" {...props} /> }} />
-      <Tabs.Screen name="orders" options={{ title: 'Pedidos', tabBarIcon: (props) => <TabBarIcon name="list-outline" {...props} /> }} />
-      <Tabs.Screen name="users" options={{ title: 'Usuarios', tabBarIcon: (props) => <TabBarIcon name="people-outline" {...props} /> }} />
-      <Tabs.Screen name="categories" options={{ title: 'Categorías', tabBarIcon: (props) => <TabBarIcon name="pricetags-outline" {...props} /> }} />
-      <Tabs.Screen name="suppliers" options={{ title: 'Proveedores', tabBarIcon: (props) => <TabBarIcon name="business-outline" {...props} /> }} />
-      <Tabs.Screen name="drivers" options={{ title: 'Repartidores', tabBarIcon: (props) => <TabBarIcon name="bicycle-outline" {...props} /> }} />
-      <Tabs.Screen name="roles" options={{ title: 'Roles', tabBarIcon: (props) => <TabBarIcon name="key-outline" {...props} /> }} />
+      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: makeTabBarIcon('stats-chart-outline') }} />
+      <Tabs.Screen name="products" options={{ title: 'Productos', tabBarIcon: makeTabBarIcon('cube-outline') }} />
+      <Tabs.Screen name="orders" options={{ title: 'Pedidos', tabBarIcon: makeTabBarIcon('list-outline') }} />
+      <Tabs.Screen name="users" options={{ title: 'Usuarios', tabBarIcon: makeTabBarIcon('people-outline') }} />
+      <Tabs.Screen name="categories" options={{ title: 'Categorías', tabBarIcon: makeTabBarIcon('pricetags-outline') }} />
+      <Tabs.Screen name="suppliers" options={{ title: 'Proveedores', tabBarIcon: makeTabBarIcon('business-outline') }} />
+      <Tabs.Screen name="drivers" options={{ title: 'Repartidores', tabBarIcon: makeTabBarIcon('bicycle-outline') }} />
+      <Tabs.Screen name="roles" options={{ title: 'Roles', tabBarIcon: makeTabBarIcon('key-outline') }} />
     </Tabs>
   );
 }
