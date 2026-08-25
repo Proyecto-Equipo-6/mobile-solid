@@ -30,6 +30,10 @@ function HeaderSignOutButton({ onPress }: { onPress: () => void }) {
   );
 }
 
+function HeaderRight({ signOut }: { signOut: () => void }) {
+  return <HeaderSignOutButton onPress={signOut} />;
+}
+
 export default function AdminLayout() {
   const { role, isAuthenticated, isLoading, signOut } = useAuth();
 
@@ -45,6 +49,8 @@ export default function AdminLayout() {
     return <Redirect href={role ? ROLE_HOME[role] : '/login'} />;
   }
 
+  const renderHeaderRight = () => <HeaderRight signOut={signOut} />;
+
   return (
     <Tabs
       screenOptions={{
@@ -58,7 +64,7 @@ export default function AdminLayout() {
         headerStyle: { backgroundColor: DashColors.fondo },
         headerTitleStyle: { fontWeight: '700', color: DashColors.text },
         sceneStyle: { backgroundColor: DashColors.bg },
-        headerRight: () => <HeaderSignOutButton onPress={signOut} />,
+        headerRight: renderHeaderRight,
       }}>
       <Tabs.Screen name="dashboard" options={{ title: 'Dashboard', tabBarIcon: makeTabBarIcon('stats-chart-outline') }} />
       <Tabs.Screen name="products" options={{ title: 'Productos', tabBarIcon: makeTabBarIcon('cube-outline') }} />
