@@ -1,9 +1,22 @@
 import { Ionicons } from '@expo/vector-icons';
+import type { ComponentProps } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLE_HOME } from '@/features/auth/types/auth.types';
 import { useTheme } from '@/shared/hooks/use-theme';
+
+type IoniconsName = ComponentProps<typeof Ionicons>['name'];
+
+function TabBarIcon({ name, color, size }: { name: IoniconsName; color: string; size: number }) {
+  return <Ionicons name={name} size={size} color={color} />;
+}
+
+function makeTabBarIcon(name: IoniconsName) {
+  return function TabBarIconWrapper(props: { color: string; size: number }) {
+    return <TabBarIcon name={name} {...props} />;
+  };
+}
 
 export default function ClientLayout() {
   const { role, isAuthenticated, isLoading } = useAuth();
@@ -38,35 +51,35 @@ export default function ClientLayout() {
         name="home"
         options={{
           title: 'Inicio',
-          tabBarIcon: ({ color, size }) => <Ionicons name="home-outline" size={size} color={color} />,
+          tabBarIcon: makeTabBarIcon('home-outline'),
         }}
       />
       <Tabs.Screen
         name="catalog"
         options={{
           title: 'Catálogo',
-          tabBarIcon: ({ color, size }) => <Ionicons name="grid-outline" size={size} color={color} />,
+          tabBarIcon: makeTabBarIcon('grid-outline'),
         }}
       />
       <Tabs.Screen
         name="cart"
         options={{
           title: 'Carrito',
-          tabBarIcon: ({ color, size }) => <Ionicons name="cart-outline" size={size} color={color} />,
+          tabBarIcon: makeTabBarIcon('cart-outline'),
         }}
       />
       <Tabs.Screen
         name="orders"
         options={{
           title: 'Mis pedidos',
-          tabBarIcon: ({ color, size }) => <Ionicons name="receipt-outline" size={size} color={color} />,
+          tabBarIcon: makeTabBarIcon('receipt-outline'),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: 'Perfil',
-          tabBarIcon: ({ color, size }) => <Ionicons name="person-outline" size={size} color={color} />,
+          tabBarIcon: makeTabBarIcon('person-outline'),
         }}
       />
       <Tabs.Screen
