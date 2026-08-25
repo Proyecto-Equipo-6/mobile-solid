@@ -3,7 +3,6 @@ import { Pressable, StyleSheet } from 'react-native';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
-import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 
 type AdminFilterBarProps = {
   activeCount: number;
@@ -13,8 +12,6 @@ type AdminFilterBarProps = {
 };
 
 export function AdminFilterBar({ activeCount, inactiveCount, filter, onFilterChange }: AdminFilterBarProps) {
-  const dash = useDashTheme();
-
   return (
     <ThemedView style={styles.container}>
       <Pressable onPress={() => onFilterChange('active')}>
