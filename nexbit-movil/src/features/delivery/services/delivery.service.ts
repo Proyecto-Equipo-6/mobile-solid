@@ -66,7 +66,7 @@ export async function subirComprobante(orderId: string, imagen: PickedImage): Pr
     const byteCharacters = atob(imagen.base64);
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
+      byteNumbers[i] = byteCharacters.codePointAt(i) ?? 0;
     }
     const byteArray = new Uint8Array(byteNumbers);
     const blob = new Blob([byteArray], { type: tipo });
