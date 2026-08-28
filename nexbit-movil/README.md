@@ -41,6 +41,29 @@ This command will move the starter code to the **app-example** directory and cre
 - If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
 - Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
 
+## Configuración de IP del backend
+
+Cada desarrollador debe configurar la IP de su máquina para conectar el APK con su backend local.
+
+1. Copia `.env.example` a `.env`:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Abre `.env` y cambia la IP por la de tu máquina:
+   ```bash
+   # En Windows: ipconfig → direcciones IPv4
+   # En Mac/Linux: ifconfig → en0 o wlan0
+   EXPO_PUBLIC_API_URL=http://192.168.1.XXX:3000/api/v1
+   ```
+
+3. Reconstruye el APK:
+   ```bash
+   eas build --platform android --profile preview
+   ```
+
+> **Nota:** La IP cambia cuando te conectas a otra red WiFi o hotspot. Si el APK no conecta, verifica tu IP actual.
+
 ## Learn more
 
 To learn more about developing your project with Expo, look at the following resources:

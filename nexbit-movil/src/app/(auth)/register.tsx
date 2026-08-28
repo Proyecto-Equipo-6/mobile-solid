@@ -58,7 +58,7 @@ export default function RegisterScreen() {
   return (
     <ThemedView style={[styles.auth, { paddingTop: insets.top + Spacing.four, paddingBottom: insets.bottom + Spacing.four }]}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        <ThemedView style={styles.card}>
+        <ThemedView style={[styles.card, { backgroundColor: theme.background, borderColor: theme.border }]}>
           <BrandMark size="large" showName={false} style={styles.logo} />
 
           <ThemedText type="title" style={styles.titulo}>
@@ -160,7 +160,7 @@ export default function RegisterScreen() {
 const styles = StyleSheet.create({
   auth: {
     flex: 1,
-    backgroundColor: '#f5f5f6',
+    backgroundColor: 'transparent',
   },
   scroll: {
     flexGrow: 1,
@@ -169,13 +169,11 @@ const styles = StyleSheet.create({
   },
   card: {
     width: '100%',
-    maxWidth: 540,
+    maxWidth: 450,
     alignSelf: 'center',
     padding: Spacing.four,
     gap: Spacing.three,
-    backgroundColor: '#ffffff',
     borderWidth: 1,
-    borderColor: '#e6e6e8',
     borderRadius: Radius.card,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 12 },
