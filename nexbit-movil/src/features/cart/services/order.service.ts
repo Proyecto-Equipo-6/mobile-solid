@@ -26,3 +26,8 @@ export async function listMyOrders(): Promise<Order[]> {
   const data = await api.get<{ pedidos: BackendPedido[]; vacio: boolean }>('/pedidos');
   return (data.pedidos ?? []).map(mapPedidoToOrder);
 }
+
+export async function cancelOrder(orderId: string): Promise<Order> {
+  const data = await api.patch<BackendPedido>(`/pedidos/${orderId}/cancel`);
+  return mapPedidoToOrder(data);
+}

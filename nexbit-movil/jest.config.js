@@ -6,4 +6,13 @@ module.exports = {
   moduleNameMapper: {
     '^@/(.*)$': '<rootDir>/src/$1',
   },
+  reporters: [
+    'default',
+    ['jest-html-reporter', {
+      pageTitle: 'Informe de Pruebas NexBit Móvil',
+      outputPath: './test-report/index.html',
+      includeFailureMessages: false,
+      includeConsoleLog: false,
+    }],
+  ],
 };

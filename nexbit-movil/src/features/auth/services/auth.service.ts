@@ -32,3 +32,19 @@ export async function refreshAuth(): Promise<User> {
   const usuario = await api.get<BackendUsuario>('/users/perfil');
   return mapUsuarioToUser(usuario);
 }
+
+export async function requestPasswordReset(email: string): Promise<{ mensaje: string }> {
+  const data = await api.post<{ mensaje: string }>('/auth/forgot-password', { email });
+  return data;
+}
+
+export async function resetPassword(
+  token: string,
+  newPassword: string,
+): Promise<{ mensaje: string }> {
+  const data = await api.post<{ mensaje: string }>('/auth/reset-password', {
+    token,
+    newPassword,
+  });
+  return data;
+}

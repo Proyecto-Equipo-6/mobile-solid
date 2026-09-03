@@ -1,4 +1,4 @@
-import { createOrder, listMyOrders } from '@/features/cart/services/order.service';
+import { createOrder, listMyOrders, cancelOrder } from '@/features/cart/services/order.service';
 
 global.fetch = jest.fn();
 
@@ -77,6 +77,15 @@ describe('order.service - integración', () => {
         ),
       ).rejects.toThrow();
     });
+
+    it('lanza error cuando el carrito está vacío', async () => {
+      await expect(
+        createOrder(
+          { direccionEntrega: 'Calle 40', idMetodoPago: 1 },
+          [],
+        ),
+      ).rejects.toThrow();
+    });
   });
 
   describe('listMyOrders', () => {
@@ -114,10 +123,102 @@ describe('order.service - integración', () => {
       expect(orders).toEqual([]);
     });
 
+    it('mapea correctamente el estado EN_CAMINO a in_transit', async () => {
+      mockFetch({
+        pedidos: [
+          {
+            id_pedido: 3,
+            total: 45000,
+            estado: 'EN_CAMINO',
+            fecha_pedido: '2026-08-27T12:00:00Z',
+          },
+        ],
+        vacio: false,
+      });
+
+      const orders = await listMyOrders();
+
+      expect(orders).toHaveLength(1);
+      expect(orders[0].status).toBe('in_transit');
+      expect(orders[0].estadoRaw).toBe('EN_CAMINO');
+    });
+
+    it('mapea correctamente el estado ASIGNADO a assigned', async () => {
+      mockFetch({
+        pedidos: [
+          {
+            id_pedido: 4,
+            total: 25000,
+            estado: 'ASIGNADO',
+            fecha_pedido: '2026-08-27T14:00:00Z',
+          },
+        ],
+        vacio: false,
+      });
+
+      const orders = await listMyOrders();
+
+      expect(orders).toHaveLength(1);
+      expect(orders[0].status).toBe('assigned');
+    });
+
+    it('retorna orders con total mapeado correctamente', async () => {
+      mockFetch({
+        pedidos: [
+          {
+            id_pedido: 5,
+            total: 99500,
+            estado: 'PENDIENTE',
+            fecha_pedido: '2026-08-27T15:00:00Z',
+          },
+        ],
+        vacio: false,
+      });
+
+      const orders = await listMyOrders();
+
+      expect(orders[0].total).toBe(99500);
+    });
+
     it('lanza error cuando el servidor falla', async () => {
       mockFetch({ error: 'Token inválido' }, { ok: false, status: 401 });
 
       await expect(listMyOrders()).rejects.toThrow();
+    });
+  });
+
+  describe('cancelOrder', () => {
+    it('llama PATCH /pedidos/:id/cancel y retorna Order mapeado', async () => {
+      mockFetch({
+        id_pedido: 1,
+        total: 35000,
+        estado: 'CANCELADO',
+        fecha_pedido: '2026-08-27T10:00:00Z',
+      });
+
+      const order = await cancelOrder('1');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/pedidos/1/cancel'),
+        expect.objectContaining({ method: 'PATCH' }),
+      );
+      expect(order.status).toBe('cancelled');
+      expect(order.estadoRaw).toBe('CANCELADO');
+    });
+
+    it('lanza error cuando el pedido no se puede cancelar', async () => {
+      mockFetch(
+        { error: 'No se puede cancelar un pedido en estado EN_CAMINO' },
+        { ok: false, status: 409 },
+      );
+
+      await expect(cancelOrder('2')).rejects.toThrow();
+    });
+
+    it('lanza error cuando el pedido no existe', async () => {
+      mockFetch({ error: 'Pedido no encontrado' }, { ok: false, status: 404 });
+
+      await expect(cancelOrder('999')).rejects.toThrow();
     });
   });
 });

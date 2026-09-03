@@ -4,6 +4,7 @@ import {
   updateDeliveryStatus,
   entregarPedido,
   marcarNoEntregado,
+  subirComprobante,
 } from '@/features/delivery/services/delivery.service';
 
 global.fetch = jest.fn();
@@ -149,6 +150,38 @@ describe('delivery.service - integración', () => {
         expect.stringContaining('/repartidor/pedidos/1/estado'),
         expect.objectContaining({ method: 'PATCH' }),
       );
+    });
+  });
+
+  describe('subirComprobante', () => {
+    it('sube imagen y retorna la URL del comprobante', async () => {
+      mockFetch({ comprobante_url: 'https://cdn.example.com/comprobante-1.jpg' });
+
+      const url = await subirComprobante('1', {
+        uri: 'file:///tmp/foto.jpg',
+        base64: 'AAAA',
+        mimeType: 'image/jpeg',
+        fileSize: 1024,
+      });
+
+      expect(url).toBe('https://cdn.example.com/comprobante-1.jpg');
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/repartidor/pedidos/1/comprobante'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('lanza error cuando el servidor falla al subir', async () => {
+      mockFetch({ error: 'Archivo muy grande' }, { ok: false, status: 413 });
+
+      await expect(
+        subirComprobante('1', {
+          uri: 'file:///tmp/foto.jpg',
+          base64: 'AAAA',
+          mimeType: 'image/jpeg',
+          fileSize: 1024,
+        }),
+      ).rejects.toThrow();
     });
   });
 });

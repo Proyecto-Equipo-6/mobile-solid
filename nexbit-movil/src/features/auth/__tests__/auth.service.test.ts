@@ -1,5 +1,6 @@
 import { setAuthToken } from '@/shared/api/client';
-import { login, register, refreshAuth } from '@/features/auth/services/auth.service';
+import { login, register, logout, refreshAuth, requestPasswordReset, resetPassword } from '@/features/auth/services/auth.service';
+import { getMyProfile, updateMyProfile } from '@/features/auth/services/profile.service';
 
 global.fetch = jest.fn();
 
@@ -112,6 +113,117 @@ describe('auth.service - integración', () => {
         expect.objectContaining({ method: 'GET' }),
       );
       expect(user.role).toBe('driver');
+    });
+  });
+
+  describe('logout', () => {
+    it('llama POST /auth/logout y limpia el token', async () => {
+      mockFetch({ mensaje: 'Sesión cerrada' });
+      setAuthToken('jwt-abc-123');
+
+      await logout();
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/logout'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+      const { getAuthToken } = require('@/shared/api/client');
+      expect(getAuthToken()).toBeNull();
+    });
+
+    it('limpia el token aunque el request falle', async () => {
+      mockFetch({ error: 'Error' }, { ok: false, status: 500 });
+      setAuthToken('jwt-abc-123');
+
+      try {
+        await logout();
+      } catch {
+        // logout rethrows after clearing token
+      }
+
+      const { getAuthToken } = require('@/shared/api/client');
+      expect(getAuthToken()).toBeNull();
+    });
+  });
+
+  describe('getMyProfile', () => {
+    it('lanza error cuando el servidor falla', async () => {
+      mockFetch({ error: 'Token inválido' }, { ok: false, status: 401 });
+
+      await expect(getMyProfile()).rejects.toThrow();
+    });
+  });
+
+  describe('updateMyProfile', () => {
+    it('llama PUT /users/perfil con los datos actualizados', async () => {
+      mockFetch({
+        id_usuario: 1,
+        id_rol: 2,
+        nombre_apellido: 'Juan Actualizado',
+        email: 'juan@test.com',
+        telefono: '3009999999',
+      });
+
+      const user = await updateMyProfile({ nombre_apellido: 'Juan Actualizado', telefono: '3009999999' });
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/users/perfil'),
+        expect.objectContaining({ method: 'PUT' }),
+      );
+      expect(user.name).toBe('Juan Actualizado');
+      expect(user.phone).toBe('3009999999');
+    });
+
+    it('lanza error cuando los datos son inválidos', async () => {
+      mockFetch({ error: 'Datos inválidos' }, { ok: false, status: 400 });
+
+      await expect(updateMyProfile({ telefono: '' })).rejects.toThrow();
+    });
+  });
+
+  describe('requestPasswordReset', () => {
+    it('llama POST /auth/forgot-password con el email', async () => {
+      mockFetch({ mensaje: 'Correo de recuperación enviado' });
+
+      const result = await requestPasswordReset('juan@test.com');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/forgot-password'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.mensaje).toBe('Correo de recuperación enviado');
+    });
+
+    it('lanza error cuando el email no existe', async () => {
+      mockFetch({ error: 'Email no registrado' }, { ok: false, status: 404 });
+
+      await expect(requestPasswordReset('noexiste@test.com')).rejects.toThrow();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('llama POST /auth/reset-password con token y nueva contraseña', async () => {
+      mockFetch({ mensaje: 'Contraseña actualizada correctamente' });
+
+      const result = await resetPassword('token-abc-123', 'nuevaPass123');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/auth/reset-password'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(result.mensaje).toBe('Contraseña actualizada correctamente');
+    });
+
+    it('lanza error cuando el token es inválido', async () => {
+      mockFetch({ error: 'Token inválido o expirado' }, { ok: false, status: 400 });
+
+      await expect(resetPassword('token-invalido', 'nuevaPass')).rejects.toThrow();
+    });
+
+    it('lanza error cuando el token ha expirado', async () => {
+      mockFetch({ error: 'Token expirado' }, { ok: false, status: 410 });
+
+      await expect(resetPassword('token-expirado', 'nuevaPass')).rejects.toThrow();
     });
   });
 });
