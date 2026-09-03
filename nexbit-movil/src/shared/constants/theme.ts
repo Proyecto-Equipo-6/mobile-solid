@@ -116,6 +116,8 @@ export const DashColors = {
   accent: '#f5f5f5',
   sobreAccent: '#0a0a0a',
   accentBg: 'rgba(245, 245, 245, 0.08)',
+  success: '#4ade80',
+  error: '#f87171',
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

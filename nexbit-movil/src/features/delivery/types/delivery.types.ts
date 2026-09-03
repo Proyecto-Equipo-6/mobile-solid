@@ -16,6 +16,14 @@ export type BackendPedidoRepartidor = {
   clienteNombre?: string;
   clienteTelefono?: string;
   caracteristicasLogistica?: string;
+  productos?: Array<{
+    id_producto?: number | string;
+    nombre: string;
+    cantidad: number;
+    precio?: number | string;
+    precio_unitario?: number | string;
+    subtotal?: number | string;
+  }>;
 };
 
 export type DeliveryOrder = {

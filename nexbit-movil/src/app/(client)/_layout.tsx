@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Redirect, Tabs } from 'expo-router';
+import type { ColorValue } from 'react-native';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
 import { ROLE_HOME } from '@/features/auth/types/auth.types';
@@ -8,13 +9,13 @@ import { useTheme } from '@/shared/hooks/use-theme';
 
 type IoniconsName = ComponentProps<typeof Ionicons>['name'];
 
-function TabBarIcon({ name, color, size }: Readonly<{ name: IoniconsName; color: string; size: number }>) {
+function TabBarIcon({ name, color, size }: Readonly<{ name: IoniconsName; color: ColorValue; size: number }>) {
   return <Ionicons name={name} size={size} color={color} />;
 }
 
 function makeTabBarIcon(name: IoniconsName) {
-  return function TabBarIconWrapper(props: Readonly<{ color: string; size: number }>) {
-    return <TabBarIcon name={name} {...props} />;
+  return function TabBarIconWrapper(props: { focused: boolean; color: ColorValue; size: number }) {
+    return <TabBarIcon name={name} color={props.color} size={props.size} />;
   };
 }
 

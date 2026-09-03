@@ -110,7 +110,7 @@ export default function OrdersScreen() {
               </ThemedText>
               <ThemedView style={styles.acciones}>
                 {item.comprobanteUrl && (
-                  <Pressable onPress={() => { setComprobanteImageUrl(item.comprobanteUrl); setComprobanteLoaded(false); }}>
+                  <Pressable onPress={() => { setComprobanteImageUrl(item.comprobanteUrl ?? null); setComprobanteLoaded(false); }}>
                     <ThemedText style={[styles.enlace, { color: DashColors.success }]}>Ver comprobante</ThemedText>
                   </Pressable>
                 )}

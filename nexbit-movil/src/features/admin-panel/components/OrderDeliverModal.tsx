@@ -11,7 +11,7 @@ type OrderDeliverModalProps = Readonly<{
   visible: boolean;
   orderId: string;
   onClose: () => void;
-  onDeliver: (orderId: string, imagen: { uri: string; mimeType: string; base64?: string }, observacion?: string) => Promise<void>;
+  onDeliver: (imagen: { uri: string; mimeType: string; base64?: string }, observacion?: string) => Promise<void>;
   isLoading: boolean;
 }>;
 
@@ -45,7 +45,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
         setImagen({
           uri: asset.uri,
           mimeType: asset.mimeType || 'image/jpeg',
-          base64: asset.base64,
+          base64: asset.base64 ?? undefined,
         });
       }
     } catch (error) {
@@ -63,7 +63,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
     }
 
     try {
-      await onDeliver(orderId, imagen, observacion || undefined);
+      await onDeliver(imagen, observacion || undefined);
       setImagen(null);
       setObservacion('');
       onClose();
@@ -90,7 +90,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
               Confirmar entrega
             </ThemedText>
             <Pressable onPress={onClose} disabled={isLoading}>
-              <ThemedText type="h3" style={{ color: dash.textSecondary }}>
+              <ThemedText type="title" style={{ color: dash.textSecondary }}>
                 ✕
               </ThemedText>
             </Pressable>
@@ -108,7 +108,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
             {!imagen ? (
               <Pressable onPress={pickImage} disabled={isLoading || isPicking} style={styles.imagePlaceholder}>
                 <ThemedView style={styles.placeholderContent}>
-                  <ThemedText type="h3" style={{ color: dash.textSecondary }}>📷</ThemedText>
+                  <ThemedText type="title" style={{ color: dash.textSecondary }}>📷</ThemedText>
                   <ThemedText type="small" style={{ color: dash.textSecondary, marginTop: Spacing.two }}>
                     Toca para seleccionar la foto
                   </ThemedText>
@@ -124,7 +124,7 @@ export function OrderDeliverModal({ visible, orderId, onClose, onDeliver, isLoad
                     style={{
                       width: '100%',
                       height: '100%',
-                      borderRadius: Radius.md,
+                      borderRadius: Radius.card,
                       overflow: 'hidden',
                     }}
                   >
@@ -201,7 +201,7 @@ const styles = StyleSheet.create({
   modal: {
     borderRadius: Radius.card,
     overflow: 'hidden',
-    ...Shadows.elevated,
+    ...Shadows.card,
     maxHeight: '85%',
   },
   header: {
@@ -221,7 +221,7 @@ const styles = StyleSheet.create({
   imagePlaceholder: {
     borderWidth: 2,
     borderStyle: 'dashed',
-    borderRadius: Radius.md,
+    borderRadius: Radius.card,
     padding: Spacing.four,
     alignItems: 'center',
   },
@@ -231,12 +231,12 @@ const styles = StyleSheet.create({
   },
   imagePreview: {
     position: 'relative',
-    borderRadius: Radius.md,
+    borderRadius: Radius.card,
     overflow: 'hidden',
   },
   imageContainer: {
     aspectRatio: 16 / 9,
-    borderRadius: Radius.md,
+    borderRadius: Radius.card,
     overflow: 'hidden',
   },
   removeButton: {
