@@ -50,11 +50,11 @@ export function OrderAssigneeModal({
                     <ThemedText type="smallBold" style={{ color: dash.text }}>
                       {driver.name}
                     </ThemedText>
-                    {driver.phone && (
-                      <ThemedText type="small" style={{ color: dash.textMuted }}>
-                        {driver.phone}
-                      </ThemedText>
-                    )}
+                    <ThemedText type="small" style={{ color: dash.textMuted }}>
+                      {driver.phone
+                        ? `${driver.phone} · ${driver.deliveriesToday ?? 0} hoy`
+                        : `${driver.deliveriesToday ?? 0} hoy`}
+                    </ThemedText>
                   </ThemedView>
                 </ThemedView>
               </Pressable>

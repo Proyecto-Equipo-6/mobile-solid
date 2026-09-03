@@ -13,6 +13,7 @@ export type BackendRepartidor = {
   email?: string;
   direccion?: string;
   estado: string;
+  pedidos_hoy?: number | string;
 };
 
 export type DriverOption = {
@@ -20,17 +21,19 @@ export type DriverOption = {
   name: string;
   phone?: string;
   available: boolean;
+  deliveriesToday?: number;
 };
 
 export function mapRepartidorToDriver(repartidor: BackendRepartidor): DriverOption {
-  const id = String(repartidor.id_repartidor ?? repartidor.id_usuario ?? repartidor.id);
-  const name = repartidor.nombre_apellido ?? repartidor.nombre ?? repartidor.nombre_completo ?? repartidor.name ?? 'Sin Nombre';
+  const id = String(repartidor.id_repartidor ?? repartidor.id_usuario);
+  const name = repartidor.nombre_apellido ?? repartidor.nombre ?? 'Sin Nombre';
 
   return {
     id,
     name,
     phone: repartidor.telefono,
     available: true,
+    deliveriesToday: Number(repartidor.pedidos_hoy ?? 0),
   };
 }
 
@@ -63,6 +66,12 @@ export type AdminOrder = {
   createdAt: string;
   driverId?: string;
   comprobanteUrl?: string | null;
+};
+
+export type DeliverImage = {
+  uri: string;
+  mimeType: string;
+  base64?: string;
 };
 
 export function mapPedidoAdminToAdminOrder(pedido: BackendPedidoAdmin): AdminOrder {

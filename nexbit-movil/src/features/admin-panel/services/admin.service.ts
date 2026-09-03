@@ -13,8 +13,10 @@ import type {
   BackendRol,
   CategoriaAdmin,
   CreateUserPayload,
+  DeliverImage,
   DriverOption,
   Proveedor,
+  ProveedorAdmin,
   RepartidorAdmin,
   RolAdmin,
   UpdateUserPayload,
@@ -140,6 +142,20 @@ export async function listAdminOrders(): Promise<AdminOrder[]> {
   return ordersArray.map(mapPedidoAdminToAdminOrder);
 }
 
+export async function listDriverOrders(driverId: string): Promise<AdminOrder[]> {
+  const response = await api.get<{
+    data: BackendPedidoAdmin[];
+    total: number;
+    page: number;
+    limit: number;
+  } | BackendPedidoAdmin[]>('/admin/pedidos', {
+    repartidor: Number(driverId),
+    limit: 100,
+  });
+  const ordersArray = Array.isArray(response) ? response : (response.data ?? []);
+  return ordersArray.map(mapPedidoAdminToAdminOrder);
+}
+
 function extractArrayFromResponse<T>(data: unknown): T[] {
   if (Array.isArray(data)) return data;
   if (data && typeof data === 'object') {
@@ -175,12 +191,12 @@ export async function updateOrderStatus(orderId: string, estado: string): Promis
   return mapPedidoAdminToAdminOrder(data);
 }
 
-export async function deliverOrderWithEvidence(orderId: string, imagen: PickedImage, observacion?: string): Promise<AdminOrder> {
+export async function deliverOrderWithEvidence(orderId: string, imagen: DeliverImage, observacion?: string): Promise<AdminOrder> {
   const tipo = imagen.mimeType === 'image/png' ? 'image/png' : 'image/jpeg';
   const formData = new FormData();
   
   if (Platform.OS === 'web') {
-    const byteCharacters = atob(imagen.base64);
+    const byteCharacters = atob(imagen.base64 ?? '');
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.codePointAt(i) ?? 0;

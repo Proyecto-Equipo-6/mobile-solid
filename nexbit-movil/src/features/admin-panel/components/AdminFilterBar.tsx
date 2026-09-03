@@ -9,24 +9,54 @@ type AdminFilterBarProps = Readonly<{
   inactiveCount: number;
   filter: 'active' | 'inactive';
   onFilterChange: (f: 'active' | 'inactive') => void;
+  allCount?: number;
+  showAll?: boolean;
+  onShowAll?: () => void;
 }>;
 
-export function AdminFilterBar({ activeCount, inactiveCount, filter, onFilterChange }: AdminFilterBarProps) {
+export function AdminFilterBar({
+  activeCount,
+  inactiveCount,
+  filter,
+  onFilterChange,
+  allCount,
+  showAll,
+  onShowAll,
+}: AdminFilterBarProps) {
   return (
     <ThemedView style={styles.container}>
+      {allCount !== undefined && (
+        <Pressable onPress={onShowAll}>
+          <ThemedView
+            style={[
+              styles.chip,
+              {
+                backgroundColor: showAll ? DashColors.accent : 'transparent',
+                borderColor: DashColors.accent,
+                borderWidth: 1,
+              },
+            ]}>
+            <ThemedText
+              type="smallBold"
+              style={{ color: showAll ? '#fff' : DashColors.accent, fontSize: 13 }}>
+              Todos ({allCount})
+            </ThemedText>
+          </ThemedView>
+        </Pressable>
+      )}
       <Pressable onPress={() => onFilterChange('active')}>
         <ThemedView
           style={[
             styles.chip,
             {
-              backgroundColor: filter === 'active' ? DashColors.success : 'transparent',
+              backgroundColor: filter === 'active' && !showAll ? DashColors.success : 'transparent',
               borderColor: DashColors.success,
               borderWidth: 1,
             },
           ]}>
           <ThemedText
             type="smallBold"
-            style={{ color: filter === 'active' ? '#fff' : DashColors.success, fontSize: 13 }}>
+            style={{ color: filter === 'active' && !showAll ? '#fff' : DashColors.success, fontSize: 13 }}>
             Activos ({activeCount})
           </ThemedText>
         </ThemedView>
