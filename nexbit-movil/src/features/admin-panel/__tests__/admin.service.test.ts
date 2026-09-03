@@ -5,6 +5,7 @@ import {
   deleteProduct,
   getAnalyticsSummary,
   listAdminOrders,
+  listDriverOrders,
   listDrivers,
   assignOrder,
   updateOrderStatus,
@@ -27,6 +28,8 @@ import {
   listRoles,
   createRole,
   updateRole,
+  uploadProductImage,
+  deliverOrderWithEvidence,
 } from '@/features/admin-panel/services/admin.service';
 
 global.fetch = jest.fn();
@@ -170,6 +173,29 @@ describe('admin.service - integración', () => {
     });
   });
 
+  describe('listDriverOrders', () => {
+    it('llama /admin/pedidos con filtro por repartidor y mapea pedidos', async () => {
+      mockFetch({
+        data: [
+          { id_pedido: 10, clienteNombre: 'Ana', estado: 'ENTREGADO', total: 20000, fecha_pedido: '2026-08-27T10:00:00Z' },
+        ],
+        total: 1,
+        page: 1,
+        limit: 100,
+      });
+
+      const orders = await listDriverOrders('3');
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/admin/pedidos?repartidor=3'),
+        expect.objectContaining({ method: 'GET' }),
+      );
+      expect(orders).toHaveLength(1);
+      expect(orders[0].customerName).toBe('Ana');
+      expect(orders[0].estadoRaw).toBe('ENTREGADO');
+    });
+  });
+
   describe('listDrivers', () => {
     it('retorna array de DriverOption', async () => {
       mockFetch([
@@ -239,6 +265,7 @@ describe('admin.service - integración', () => {
         email: 'nuevo@test.com',
         password: '1234',
         id_rol: 2,
+        telefono: '3001234567',
       });
 
       expect(user.name).toBe('Nuevo');
@@ -450,6 +477,62 @@ describe('admin.service - integración', () => {
       const role = await updateRole('1', { name: 'Super Admin', description: 'Full access' });
 
       expect(role.name).toBe('Super Admin');
+    });
+  });
+
+  describe('uploadProductImage', () => {
+    it('sube imagen y retorna la URL', async () => {
+      mockFetch({ imagen_url: 'https://cdn.example.com/producto-1.jpg' });
+
+      const url = await uploadProductImage({
+        uri: 'file:///tmp/foto.jpg',
+        base64: 'AAAA',
+        mimeType: 'image/jpeg',
+        fileSize: 2048,
+      });
+
+      expect(url).toBe('https://cdn.example.com/producto-1.jpg');
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/productos/imagen'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+    });
+
+    it('lanza error cuando el servidor falla al subir', async () => {
+      mockFetch({ error: 'Formato no soportado' }, { ok: false, status: 400 });
+
+      await expect(
+        uploadProductImage({
+          uri: 'file:///tmp/foto.gif',
+          base64: 'AAAA',
+          mimeType: 'image/gif',
+          fileSize: 512,
+        }),
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('deliverOrderWithEvidence', () => {
+    it('sube evidencia y marca pedido como entregado', async () => {
+      mockFetch({
+        id_pedido: 1,
+        estado: 'ENTREGADO',
+        clienteNombre: 'Juan',
+        total: 35000,
+        fecha_pedido: '2026-08-27T10:00:00Z',
+      });
+
+      const order = await deliverOrderWithEvidence(
+        '1',
+        { uri: 'file:///tmp/evidencia.jpg', base64: 'AAAA', mimeType: 'image/jpeg' },
+        'Entregado en puerta',
+      );
+
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/admin/pedidos/1/entregar'),
+        expect.objectContaining({ method: 'POST' }),
+      );
+      expect(order.status).toBe('delivered');
     });
   });
 });

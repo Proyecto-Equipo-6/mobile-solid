@@ -6,6 +6,12 @@ jest.mock('@/features/delivery/services/delivery.service');
 
 const mockedDeliveryService = jest.mocked(deliveryService);
 
+const PEDIDO_BASE = {
+  total: 35000,
+  estadoRaw: 'EN_CAMINO',
+  createdAt: '2026-01-01',
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -38,6 +44,7 @@ describe('useDriverOrders hook', () => {
         address: 'Calle 10',
         status: 'in_transit',
         products: [],
+        ...PEDIDO_BASE,
       },
       pedidosEnCola: [],
     });
@@ -46,7 +53,8 @@ describe('useDriverOrders hook', () => {
       customerName: 'Juan',
       address: 'Calle 10',
       status: 'in_transit',
-      products: [{ name: 'Laptop', quantity: 1, price: 3000000 }],
+      products: [{ id: '1', name: 'Laptop', quantity: 1, unitPrice: 3000000, subtotal: 3000000 }],
+      ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useDriverOrders());
@@ -85,6 +93,7 @@ describe('useDriverOrders hook', () => {
       address: 'Calle 10',
       status: 'in_transit',
       products: [],
+      ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useDriverOrders());
@@ -113,6 +122,7 @@ describe('useDriverOrders hook', () => {
       address: 'Calle 10',
       status: 'delivered',
       products: [],
+      ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useDriverOrders());
@@ -141,6 +151,7 @@ describe('useDriverOrders hook', () => {
       address: 'Calle 10',
       status: 'not_delivered',
       products: [],
+      ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useDriverOrders());
@@ -155,5 +166,36 @@ describe('useDriverOrders hook', () => {
     });
 
     expect(mockedDeliveryService.marcarNoEntregado).toHaveBeenCalledWith('1', 'No encontrado');
+  });
+
+  it('reload recarga el dashboard', async () => {
+    mockedDeliveryService.getDashboard
+      .mockResolvedValueOnce({
+        conteoDelDia: 3,
+        pedidoActivo: null,
+        pedidosEnCola: [],
+      })
+      .mockResolvedValueOnce({
+        conteoDelDia: 5,
+        pedidoActivo: null,
+        pedidosEnCola: [],
+      });
+
+    const { result } = await renderHook(() => useDriverOrders());
+    await act(async () => {});
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    expect(result.current.dashboard?.conteoDelDia).toBe(3);
+
+    await act(async () => {
+      result.current.reload();
+    });
+
+    await waitFor(() => {
+      expect(result.current.dashboard?.conteoDelDia).toBe(5);
+    });
   });
 });

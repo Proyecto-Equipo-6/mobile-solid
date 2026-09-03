@@ -13,7 +13,7 @@ beforeEach(() => {
 describe('useProducts hook', () => {
   it('carga productos y categorías al montar', async () => {
     mockedCatalogService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología' },
+{ id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología', stock: 10, sku: 'LAP-1', createdAt: '2026-01-01' },
     ]);
     mockedCatalogService.listCategories.mockResolvedValue([
       { id: '1', name: 'Tecnología' },
@@ -45,8 +45,8 @@ describe('useProducts hook', () => {
 
   it('filtra productos por categoría seleccionada', async () => {
     mockedCatalogService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología' },
-      { id: '2', name: 'Camisa', price: 50000, available: true, categoryName: 'Ropa' },
+{ id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología', stock: 10, sku: 'LAP-1', createdAt: '2026-01-01' },
+      { id: '2', name: 'Camisa', price: 50000, available: true, categoryName: 'Ropa', stock: 5, sku: 'CAM-1', createdAt: '2026-01-01' },
     ]);
     mockedCatalogService.listCategories.mockResolvedValue([
       { id: '1', name: 'Tecnología' },
@@ -81,7 +81,7 @@ describe('useProducts hook', () => {
     });
 
     mockedCatalogService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Nuevo', price: 1000, available: true, categoryName: 'Otros' },
+      { id: '1', name: 'Nuevo', price: 1000, available: true, categoryName: 'Otros', stock: 3, sku: 'NUE-1', createdAt: '2026-01-01' },
     ]);
 
     await act(async () => {
@@ -95,3 +95,4 @@ describe('useProducts hook', () => {
     expect(result.current.products).toHaveLength(1);
   });
 });
+

@@ -6,6 +6,25 @@ jest.mock('@/features/admin-panel/services/admin.service');
 
 const mockedAdminService = jest.mocked(adminService);
 
+const RESUMEN_VACIO = {
+  kpis: [],
+  ventasPorMes: [],
+  pedidosPorEstado: [],
+  productosMasVendidos: [],
+  topClientes: [],
+};
+
+const PRODUCTO_BASE = {
+  stock: 10,
+  sku: 'SKU-001',
+  createdAt: '2026-01-01',
+};
+
+const PEDIDO_BASE = {
+  estadoRaw: 'PENDIENTE',
+  createdAt: '2026-01-01',
+};
+
 beforeEach(() => {
   jest.clearAllMocks();
 });
@@ -13,9 +32,10 @@ beforeEach(() => {
 describe('useAdminInventory hook', () => {
   it('carga productos y resumen al montar', async () => {
     mockedAdminService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología' },
+      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología', ...PRODUCTO_BASE },
     ]);
     mockedAdminService.getAnalyticsSummary.mockResolvedValue({
+      ...RESUMEN_VACIO,
       kpis: [
         { id: 'productos', valor: 10, titulo: '', delta: 0, subtitulo: '', tipo: '', serie: [] },
         { id: 'pedidos', valor: 50, titulo: '', delta: 0, subtitulo: '', tipo: '', serie: [] },
@@ -37,7 +57,7 @@ describe('useAdminInventory hook', () => {
 
   it('maneja error al cargar inventario', async () => {
     mockedAdminService.listProducts.mockRejectedValue(new Error('Server error'));
-    mockedAdminService.getAnalyticsSummary.mockResolvedValue({ kpis: [] });
+    mockedAdminService.getAnalyticsSummary.mockResolvedValue(RESUMEN_VACIO);
 
     const { result } = await renderHook(() => useAdminInventory());
     await act(async () => {});
@@ -49,13 +69,14 @@ describe('useAdminInventory hook', () => {
 
   it('addProduct agrega un producto a la lista', async () => {
     mockedAdminService.listProducts.mockResolvedValue([]);
-    mockedAdminService.getAnalyticsSummary.mockResolvedValue({ kpis: [] });
+    mockedAdminService.getAnalyticsSummary.mockResolvedValue(RESUMEN_VACIO);
     mockedAdminService.createProduct.mockResolvedValue({
       id: '2',
       name: 'Mouse',
       price: 80000,
       available: true,
       categoryName: 'Tecnología',
+      ...PRODUCTO_BASE,
     });
 
     const { result } = await renderHook(() => useAdminInventory());
@@ -81,15 +102,16 @@ describe('useAdminInventory hook', () => {
 
   it('editProduct actualiza un producto en la lista', async () => {
     mockedAdminService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología' },
+      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología', ...PRODUCTO_BASE },
     ]);
-    mockedAdminService.getAnalyticsSummary.mockResolvedValue({ kpis: [] });
+    mockedAdminService.getAnalyticsSummary.mockResolvedValue(RESUMEN_VACIO);
     mockedAdminService.updateProduct.mockResolvedValue({
       id: '1',
       name: 'Laptop HP',
       price: 2600000,
       available: true,
       categoryName: 'Tecnología',
+      ...PRODUCTO_BASE,
     });
 
     const { result } = await renderHook(() => useAdminInventory());
@@ -107,9 +129,9 @@ describe('useAdminInventory hook', () => {
 
   it('removeProduct elimina un producto de la lista', async () => {
     mockedAdminService.listProducts.mockResolvedValue([
-      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología' },
+      { id: '1', name: 'Laptop', price: 2500000, available: true, categoryName: 'Tecnología', ...PRODUCTO_BASE },
     ]);
-    mockedAdminService.getAnalyticsSummary.mockResolvedValue({ kpis: [] });
+    mockedAdminService.getAnalyticsSummary.mockResolvedValue(RESUMEN_VACIO);
     mockedAdminService.deleteProduct.mockResolvedValue(undefined);
 
     const { result } = await renderHook(() => useAdminInventory());
@@ -129,7 +151,7 @@ describe('useAdminInventory hook', () => {
 describe('useAdminOrders hook', () => {
   it('carga pedidos y repartidores al montar', async () => {
     mockedAdminService.listAdminOrders.mockResolvedValue([
-      { id: '1', customerName: 'Juan', status: 'pending', total: 35000 },
+      { id: '1', customerName: 'Juan', status: 'pending', total: 35000, ...PEDIDO_BASE },
     ]);
     mockedAdminService.listDrivers.mockResolvedValue([
       { id: '1', name: 'Carlos', phone: '3001234567', available: true },
@@ -160,11 +182,11 @@ describe('useAdminOrders hook', () => {
 
   it('assignOrder actualiza el pedido en la lista', async () => {
     mockedAdminService.listAdminOrders.mockResolvedValue([
-      { id: '1', customerName: 'Juan', status: 'pending', total: 35000 },
+      { id: '1', customerName: 'Juan', status: 'pending', total: 35000, ...PEDIDO_BASE },
     ]);
     mockedAdminService.listDrivers.mockResolvedValue([]);
     mockedAdminService.assignOrder.mockResolvedValue({
-      id: '1', customerName: 'Juan', status: 'assigned', total: 35000,
+      id: '1', customerName: 'Juan', status: 'assigned', total: 35000, ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useAdminOrders());
@@ -182,11 +204,11 @@ describe('useAdminOrders hook', () => {
 
   it('confirmOrder actualiza el estado del pedido', async () => {
     mockedAdminService.listAdminOrders.mockResolvedValue([
-      { id: '1', customerName: 'Juan', status: 'pending', total: 35000 },
+      { id: '1', customerName: 'Juan', status: 'pending', total: 35000, ...PEDIDO_BASE },
     ]);
     mockedAdminService.listDrivers.mockResolvedValue([]);
     mockedAdminService.updateOrderStatus.mockResolvedValue({
-      id: '1', customerName: 'Juan', status: 'confirmed', total: 35000,
+      id: '1', customerName: 'Juan', status: 'confirmed', total: 35000, ...PEDIDO_BASE,
     });
 
     const { result } = await renderHook(() => useAdminOrders());
@@ -200,5 +222,29 @@ describe('useAdminOrders hook', () => {
     });
 
     expect(mockedAdminService.updateOrderStatus).toHaveBeenCalledWith('1', 'CONFIRMADO');
+  });
+
+  it('deliverOrder llama deliverOrderWithEvidence', async () => {
+    mockedAdminService.listAdminOrders.mockResolvedValue([
+      { id: '1', customerName: 'Juan', status: 'pending', total: 35000, ...PEDIDO_BASE },
+    ]);
+    mockedAdminService.listDrivers.mockResolvedValue([]);
+    mockedAdminService.deliverOrderWithEvidence.mockResolvedValue({
+      id: '1', customerName: 'Juan', status: 'delivered', total: 35000, ...PEDIDO_BASE,
+    });
+
+    const { result } = await renderHook(() => useAdminOrders());
+    await act(async () => {});
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const mockImage = { uri: 'file:///tmp/evidencia.jpg', base64: 'AAAA', mimeType: 'image/jpeg' };
+
+    await act(async () => {
+      await result.current.deliverOrder('1', mockImage, 'Entregado en puerta');
+    });
+
+    expect(mockedAdminService.deliverOrderWithEvidence).toHaveBeenCalledWith('1', mockImage, 'Entregado en puerta');
   });
 });
