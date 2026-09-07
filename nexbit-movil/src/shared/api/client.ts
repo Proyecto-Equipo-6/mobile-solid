@@ -14,7 +14,8 @@ function resolveApiBaseUrl(): string {
     const host = hostUri.split(':')[0];
     return `http://${host}:3000/api/v1`;
   }
-  return 'http://localhost:3000/api/v1';
+  // Producción (APK/build de EAS sin variable de entorno): backend desplegado en Vercel.
+  return 'https://backend-solid-topaz.vercel.app/api/v1';
 }
 
 const API_BASE_URL = resolveApiBaseUrl();
