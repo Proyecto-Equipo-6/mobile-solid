@@ -63,7 +63,7 @@ export async function subirComprobante(orderId: string, imagen: PickedImage): Pr
   const formData = new FormData();
 
   if (Platform.OS === 'web') {
-    const byteCharacters = atob(imagen.base64);
+    const byteCharacters = atob(imagen.base64 ?? '');
     const byteNumbers = new Array(byteCharacters.length);
     for (let i = 0; i < byteCharacters.length; i++) {
       byteNumbers[i] = byteCharacters.codePointAt(i) ?? 0;

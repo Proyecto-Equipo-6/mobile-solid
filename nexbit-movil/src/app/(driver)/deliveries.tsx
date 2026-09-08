@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, FlatList, Pressable, StyleSheet } from 'react-native';
+import { ActivityIndicator, Alert, FlatList, Pressable, StyleSheet } from 'react-native';
 
 import { DeliveryOrderCard } from '@/features/delivery/components/DeliveryOrderCard';
 import { useDriverOrders } from '@/features/delivery/hooks/useDriverOrders';
@@ -10,7 +10,8 @@ import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { pickImage } from '@/shared/utils/imagePicker';
 
-const MAX_TAMANO_FOTO = 3 * 1024 * 1024;
+// El backend acepta hasta 5MB (uploadMiddleware). Se alinea con ese límite.
+const MAX_TAMANO_FOTO = 5 * 1024 * 1024;
 
 export default function DeliveriesScreen() {
   const dash = useDashTheme();
@@ -83,19 +84,40 @@ export default function DeliveriesScreen() {
     }
   }
 
-  async function handleUploadComprobante() {
+  function pedirSeleccionComprobante() {
     if (!activeOrder || isUploading) return;
+    Alert.alert(
+      'Subir comprobante',
+      '¿Cómo deseas adjuntar la foto de la entrega?',
+      [
+        { text: 'Cancelar', style: 'cancel' },
+        { text: 'Galería', onPress: () => void subirComprobanteDesde('library') },
+        { text: 'Cámara', onPress: () => void subirComprobanteDesde('camera') },
+      ],
+    );
+  }
+
+  async function subirComprobanteDesde(origen: 'camera' | 'library') {
+    if (!activeOrder || isUploading) return;
+    let seleccionada;
     try {
-      const seleccionada = await pickImage('camera');
-      if (!seleccionada) return;
-      if (seleccionada.fileSize > MAX_TAMANO_FOTO) {
-        return;
-      }
-      setIsUploading(true);
+      seleccionada = await pickImage(origen);
+    } catch (e) {
+      Alert.alert('Permiso requerido', e instanceof Error ? e.message : 'No se pudo acceder a la cámara/galería.');
+      return;
+    }
+    if (!seleccionada) return;
+    if (seleccionada.fileSize > MAX_TAMANO_FOTO) {
+      Alert.alert('Imagen muy grande', 'La foto supera el tamaño máximo permitido (5 MB). Intenta con otra.');
+      return;
+    }
+    setIsUploading(true);
+    try {
       const url = await uploadComprobante(activeOrder.id, seleccionada);
       setComprobanteUrl(url);
-    } catch {
+    } catch (e) {
       setComprobanteUrl(null);
+      Alert.alert('Error', e instanceof Error ? e.message : 'No se pudo subir el comprobante. Intenta de nuevo.');
     } finally {
       setIsUploading(false);
     }
@@ -142,7 +164,7 @@ export default function DeliveriesScreen() {
         onStart={() => handleStart(item)}
         onStatusSelect={setSelectedStatus}
         selectedStatus={selectedStatus}
-        onUploadComprobante={handleUploadComprobante}
+        onUploadComprobante={pedirSeleccionComprobante}
         isUploading={isUploading}
         comprobanteUploaded={Boolean(comprobanteUrl)}
         observation={observation}

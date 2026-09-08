@@ -1,8 +1,9 @@
+import { Platform } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 
 export type PickedImage = {
   uri: string;
-  base64: string;
+  base64?: string;
   mimeType: string;
   fileSize: number;
 };
@@ -12,7 +13,8 @@ const OPCIONES: ImagePicker.ImagePickerOptions = {
   allowsEditing: true,
   aspect: [4, 3],
   quality: 0.5,
-  base64: true,
+  // El base64 solo se necesita en web; en nativo se envía el URI del archivo.
+  base64: Platform.OS === 'web',
 };
 
 export async function pickImage(source: 'camera' | 'library'): Promise<PickedImage | null> {
@@ -38,14 +40,11 @@ export async function pickImage(source: 'camera' | 'library'): Promise<PickedIma
   }
 
   const asset = resultado.assets[0];
-  if (!asset.base64) {
-    throw new Error('No se pudo procesar la imagen seleccionada.');
-  }
 
   return {
     uri: asset.uri,
-    base64: asset.base64,
+    base64: asset.base64 ?? undefined,
     mimeType: asset.mimeType ?? 'image/jpeg',
-    fileSize: asset.fileSize ?? Math.round((asset.base64.length * 3) / 4),
+    fileSize: asset.fileSize ?? 0,
   };
 }
