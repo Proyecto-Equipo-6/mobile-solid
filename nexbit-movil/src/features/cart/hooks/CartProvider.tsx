@@ -23,11 +23,13 @@ export function CartProvider({ children }: Readonly<{ children: React.ReactNode 
     setItems((current) => {
       const exists = current.some((item) => item.productId === product.productId);
       if (exists) {
-        return current.map((item) =>
-          item.productId === product.productId
-            ? { ...item, quantity: item.quantity + 1 }
-            : item,
-        );
+        return current.map((item) => {
+          if (item.productId !== product.productId) {
+            return item;
+          }
+          const limite = item.stock !== undefined ? item.stock : Number.POSITIVE_INFINITY;
+          return { ...item, quantity: Math.min(item.quantity + 1, limite) };
+        });
       }
       return [...current, { ...product, quantity: 1 }];
     });
@@ -38,13 +40,18 @@ export function CartProvider({ children }: Readonly<{ children: React.ReactNode 
   }, []);
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
-    setItems((current) =>
-      quantity <= 0
-        ? current.filter((item) => item.productId !== productId)
-        : current.map((item) =>
-            item.productId === productId ? { ...item, quantity } : item,
-          ),
-    );
+    setItems((current) => {
+      if (quantity <= 0) {
+        return current.filter((item) => item.productId !== productId);
+      }
+      return current.map((item) => {
+        if (item.productId !== productId) {
+          return item;
+        }
+        const limite = item.stock !== undefined ? item.stock : Number.POSITIVE_INFINITY;
+        return { ...item, quantity: Math.min(quantity, limite) };
+      });
+    });
   }, []);
 
   const clear = useCallback(() => {

@@ -12,6 +12,7 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
+import { mensajeTelefono, validarNombre, validarTelefono } from '@/shared/utils/validacion';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -22,6 +23,7 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [message, setMessage] = useState<string | null>(null);
@@ -57,12 +59,24 @@ export default function ProfileScreen() {
     };
   }, [user]);
 
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!validarNombre(nombre)) nuevos.nombre = 'El nombre es obligatorio';
+    if (!validarTelefono(telefono)) nuevos.telefono = mensajeTelefono();
+    if (!validarNombre(direccion)) nuevos.direccion = 'La dirección es obligatoria';
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
+  }
+
   async function handleSave() {
     if (isSaving) {
       return;
     }
     setMessage(null);
     setError(null);
+    if (!validarCampos()) {
+      return;
+    }
     setIsSaving(true);
     try {
       await profileService.updateMyProfile({
@@ -96,7 +110,7 @@ export default function ProfileScreen() {
         {message && <Alert variant="success">{message}</Alert>}
         {error && <Alert variant="error">{error}</Alert>}
 
-        <Field label="Nombre y apellido" value={nombre} onChangeText={setNombre} placeholder="Nombre completo" />
+        <Field label="Nombre y apellido" value={nombre} onChangeText={setNombre} placeholder="Nombre completo" error={errores.nombre} />
         <Field label="Correo electrónico" value={email} editable={false} placeholder="correo@ejemplo.com" />
         <Field
           label="Teléfono"
@@ -105,12 +119,14 @@ export default function ProfileScreen() {
           placeholder="Ej: 3001234567"
           keyboardType="phone-pad"
           maxLength={10}
+          error={errores.telefono}
         />
         <Field
           label="Dirección"
           value={direccion}
           onChangeText={setDireccion}
           placeholder="Ej: Calle 10 # 5-20, Medellín"
+          error={errores.direccion}
         />
 
         <Button label="Guardar cambios" fullWidth loading={isSaving || isLoading} onPress={handleSave} />

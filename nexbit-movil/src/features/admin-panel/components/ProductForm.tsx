@@ -14,6 +14,7 @@ import { Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { pickImage } from '@/shared/utils/imagePicker';
 import { resolveImageUrl } from '@/shared/utils/imageUrl';
+import { validarPrecio, validarStock } from '@/shared/utils/validacion';
 
 type ProductFormProps = Readonly<{
   onSubmit: (payload: CreateProductPayload) => Promise<unknown>;
@@ -27,9 +28,11 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [sku, setSku] = useState(initialData?.sku ?? '');
   const [price, setPrice] = useState(initialData?.price ? String(initialData.price) : '');
+  const [stock, setStock] = useState(initialData?.stock !== undefined ? String(initialData.stock) : '');
   const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '');
   const [supplierId, setSupplierId] = useState(initialData?.supplierId ?? '');
   const [available, setAvailable] = useState(initialData?.available ?? true);
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [categories, setCategories] = useState<{ id: string; name: string }[]>([]);
   const [suppliers, setSuppliers] = useState<{ id: string; name: string }[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -55,17 +58,33 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
       });
   }, []);
 
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!name.trim()) nuevos.name = 'El nombre es obligatorio';
+    if (!sku.trim()) nuevos.sku = 'El SKU es obligatorio';
+    if (!validarPrecio(Number(price))) nuevos.price = 'El precio debe ser un número mayor a 0';
+    if (!validarStock(Number(stock))) nuevos.stock = 'El stock debe ser un número mayor o igual a 0';
+    if (!categoryId) nuevos.categoryId = 'Selecciona una categoría';
+    if (!supplierId) nuevos.supplierId = 'Selecciona un proveedor';
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
+  }
+
   async function handleSubmit() {
-    if (isSubmitting || !name || !sku || !price || !categoryId || !supplierId) {
+    if (isSubmitting) {
+      return;
+    }
+    if (!validarCampos()) {
       return;
     }
     setIsSubmitting(true);
     try {
       await onSubmit({
-        name,
+        name: name.trim(),
         description,
-        sku,
+        sku: sku.trim(),
         price: Number(price),
+        stock: Number(stock),
         categoryId,
         supplierId,
         available,
@@ -132,16 +151,22 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         onChangeText={setName}
         placeholder="Nombre del producto"
         placeholderTextColor={dash.textMuted}
-        style={inputStyle}
+        style={[inputStyle, errores.name ? styles.inputError : null]}
       />
+      {errores.name ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.name}</ThemedText>
+      ) : null}
       <TextInput
         value={sku}
         onChangeText={setSku}
         placeholder="SKU (ej: NEX-001)"
         placeholderTextColor={dash.textMuted}
         autoCapitalize="characters"
-        style={inputStyle}
+        style={[inputStyle, errores.sku ? styles.inputError : null]}
       />
+      {errores.sku ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.sku}</ThemedText>
+      ) : null}
       <TextInput
         value={description}
         onChangeText={setDescription}
@@ -156,8 +181,22 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         placeholder="Precio (COP)"
         placeholderTextColor={dash.textMuted}
         keyboardType="numeric"
-        style={inputStyle}
+        style={[inputStyle, errores.price ? styles.inputError : null]}
       />
+      {errores.price ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.price}</ThemedText>
+      ) : null}
+      <TextInput
+        value={stock}
+        onChangeText={setStock}
+        placeholder="Stock (cantidad disponible)"
+        placeholderTextColor={dash.textMuted}
+        keyboardType="numeric"
+        style={[inputStyle, errores.stock ? styles.inputError : null]}
+      />
+      {errores.stock ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.stock}</ThemedText>
+      ) : null}
 
       <ThemedText type="smallBold" style={{ color: dash.textSecondary, fontSize: 12 }}>
         Categoría
@@ -264,7 +303,7 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
           label={isEditing ? 'Actualizar' : 'Guardar'}
           pill
           loading={isSubmitting}
-          disabled={!name || !sku || !price || !categoryId || !supplierId}
+          disabled={isSubmitting}
           onPress={handleSubmit}
           style={{ backgroundColor: dash.accent }}
         />
@@ -288,6 +327,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingVertical: Spacing.two,
     fontSize: 14,
+  },
+  inputError: {
+    borderColor: '#f87171',
+  },
+  errorTexto: {
+    color: '#f87171',
+    marginTop: -Spacing.one,
   },
   textarea: {
     minHeight: 60,

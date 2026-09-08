@@ -13,6 +13,15 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Brand, Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
+import {
+  mensajeEmail,
+  mensajePassword,
+  mensajeTelefono,
+  validarEmail,
+  validarNombre,
+  validarPassword,
+  validarTelefono,
+} from '@/shared/utils/validacion';
 
 const TIPOS_DOCUMENTO: TipoDocumento[] = ['CC', 'Pasaporte', 'CE', 'Otro'];
 
@@ -28,14 +37,30 @@ export default function RegisterScreen() {
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
   const [password, setPassword] = useState('');
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!validarNombre(nombreApellido)) nuevos.nombre = 'El nombre es obligatorio';
+    if (!validarNombre(numeroDocumento)) nuevos.documento = 'El número de documento es obligatorio';
+    if (!validarEmail(email)) nuevos.email = mensajeEmail();
+    if (!validarTelefono(telefono)) nuevos.telefono = mensajeTelefono();
+    if (!validarNombre(direccion)) nuevos.direccion = 'La dirección es obligatoria';
+    if (!validarPassword(password)) nuevos.password = mensajePassword();
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
+  }
 
   async function handleSubmit() {
     if (submitting) {
       return;
     }
     setError(null);
+    if (!validarCampos()) {
+      return;
+    }
     setSubmitting(true);
     try {
       await register({
@@ -76,6 +101,7 @@ export default function RegisterScreen() {
             onChangeText={setNombreApellido}
             placeholder="Ej: Juan Pérez"
             required
+            error={errores.nombre}
           />
 
           <ThemedText type="smallBold" style={styles.campoEtiqueta}>
@@ -105,6 +131,7 @@ export default function RegisterScreen() {
             placeholder="Ej: 1010123456"
             keyboardType="numeric"
             required
+            error={errores.documento}
           />
           <Field
             label="Correo electrónico"
@@ -114,6 +141,7 @@ export default function RegisterScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             required
+            error={errores.email}
           />
           <Field
             label="Teléfono"
@@ -123,6 +151,7 @@ export default function RegisterScreen() {
             keyboardType="phone-pad"
             maxLength={10}
             required
+            error={errores.telefono}
           />
           <Field
             label="Dirección"
@@ -130,15 +159,16 @@ export default function RegisterScreen() {
             onChangeText={setDireccion}
             placeholder="Ej: Calle 10 # 5-20, Medellín"
             required
+            error={errores.direccion}
           />
           <Field
             label="Contraseña"
             value={password}
             onChangeText={setPassword}
-            placeholder="Entre 4 y 8 caracteres"
+            placeholder="Entre 8 y 20 caracteres, con mayúscula y número"
             secureTextEntry
-            maxLength={8}
             required
+            error={errores.password}
           />
 
           <Button label="Crear cuenta" fullWidth loading={submitting} onPress={handleSubmit} />

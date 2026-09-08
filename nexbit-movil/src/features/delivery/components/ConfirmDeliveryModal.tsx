@@ -15,7 +15,7 @@ import { useDashTheme } from '@/shared/hooks/use-dash-theme';
 import { formatCurrency } from '@/shared/utils/format';
 import { pickImage, type PickedImage } from '@/shared/utils/imagePicker';
 
-const MAX_TAMANO_FOTO = 3 * 1024 * 1024;
+const MAX_TAMANO_FOTO = 5 * 1024 * 1024;
 
 type ConfirmDeliveryModalProps = Readonly<{
   visible: boolean;

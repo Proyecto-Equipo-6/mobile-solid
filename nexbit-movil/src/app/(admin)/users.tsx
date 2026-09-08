@@ -13,6 +13,15 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
+import {
+  mensajeEmail,
+  mensajePassword,
+  mensajeTelefono,
+  validarEmail,
+  validarNombre,
+  validarPassword,
+  validarTelefono,
+} from '@/shared/utils/validacion';
 
 const ROL_COLORS: Record<string, string> = {
   '1': DashColors.error,
@@ -36,6 +45,7 @@ export default function UsersScreen() {
   const [phone, setPhone] = useState('');
   const [password, setPassword] = useState('');
   const [roleId, setRoleId] = useState('2');
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -58,17 +68,28 @@ export default function UsersScreen() {
   }
 
   function handleNew() {
-    setEditingId(null); setName(''); setEmail(''); setPhone(''); setPassword(''); setRoleId('2');
+    setEditingId(null); setName(''); setEmail(''); setPhone(''); setPassword(''); setRoleId('2'); setErrores({});
     setShowForm(true);
   }
 
   function handleEdit(item: { id: string; name: string; email: string; phone: string; roleId: string }) {
-    setEditingId(item.id); setName(item.name); setEmail(item.email); setPhone(item.phone); setRoleId(item.roleId);
+    setEditingId(item.id); setName(item.name); setEmail(item.email); setPhone(item.phone); setRoleId(item.roleId); setErrores({});
     setShowForm(true);
+  }
+
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!validarNombre(name)) nuevos.name = 'El nombre es obligatorio';
+    if (!validarEmail(email)) nuevos.email = mensajeEmail();
+    if (!validarTelefono(phone)) nuevos.phone = mensajeTelefono();
+    if (!editingId && !validarPassword(password)) nuevos.password = mensajePassword();
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
   }
 
   async function handleSave() {
     if (isSaving) return;
+    if (!validarCampos()) return;
     setIsSaving(true);
     try {
       if (editingId) {
@@ -138,10 +159,10 @@ export default function UsersScreen() {
       />
 
       <AdminCrudModal visible={showForm} title={editingId ? 'Editar usuario' : 'Nuevo usuario'} onClose={() => setShowForm(false)}>
-        <Field label="Nombre" value={name} onChangeText={setName} placeholder="Nombre y apellido" />
-        <Field label="Email" value={email} onChangeText={setEmail} placeholder="correo@ejemplo.com" keyboardType="email-address" autoCapitalize="none" />
-        <Field label="Teléfono" value={phone} onChangeText={setPhone} placeholder="10 dígitos" keyboardType="numeric" />
-        {!editingId && <Field label="Contraseña" value={password} onChangeText={setPassword} placeholder="Entre 4 y 8 caracteres" secureTextEntry />}
+        <Field label="Nombre" value={name} onChangeText={setName} placeholder="Nombre y apellido" error={errores.name} />
+        <Field label="Email" value={email} onChangeText={setEmail} placeholder="correo@ejemplo.com" keyboardType="email-address" autoCapitalize="none" error={errores.email} />
+        <Field label="Teléfono" value={phone} onChangeText={setPhone} placeholder="10 dígitos" keyboardType="numeric" maxLength={10} error={errores.phone} />
+        {!editingId && <Field label="Contraseña" value={password} onChangeText={setPassword} placeholder="Entre 8 y 20 caracteres, con mayúscula y número" secureTextEntry error={errores.password} />}
         <ThemedText type="smallBold" style={{ color: dash.textSecondary, fontSize: 12 }}>Rol</ThemedText>
         <ThemedView style={styles.chips}>
           {roles.map((r) => (

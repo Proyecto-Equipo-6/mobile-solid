@@ -13,6 +13,15 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { DashColors, Spacing } from '@/shared/constants/theme';
 import { useDashTheme } from '@/shared/hooks/use-dash-theme';
+import {
+  mensajeEmail,
+  mensajeNIT,
+  mensajeTelefono,
+  validarEmail,
+  validarNombre,
+  validarNIT,
+  validarTelefono,
+} from '@/shared/utils/validacion';
 
 export default function SuppliersScreen() {
   const dash = useDashTheme();
@@ -24,6 +33,7 @@ export default function SuppliersScreen() {
   const [nit, setNit] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -46,17 +56,28 @@ export default function SuppliersScreen() {
   }
 
   function handleNew() {
-    setEditingId(null); setName(''); setNit(''); setEmail(''); setPhone('');
+    setEditingId(null); setName(''); setNit(''); setEmail(''); setPhone(''); setErrores({});
     setShowForm(true);
   }
 
   function handleEdit(item: { id: string; name: string; nit: string; email: string; phone: string }) {
-    setEditingId(item.id); setName(item.name); setNit(item.nit); setEmail(item.email); setPhone(item.phone);
+    setEditingId(item.id); setName(item.name); setNit(item.nit); setEmail(item.email); setPhone(item.phone); setErrores({});
     setShowForm(true);
+  }
+
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!validarNombre(name)) nuevos.name = 'La razón social es obligatoria';
+    if (!validarNIT(nit)) nuevos.nit = mensajeNIT();
+    if (!validarEmail(email)) nuevos.email = mensajeEmail();
+    if (!validarTelefono(phone)) nuevos.phone = mensajeTelefono();
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
   }
 
   async function handleSave() {
     if (isSaving) return;
+    if (!validarCampos()) return;
     setIsSaving(true);
     try {
       const payload = { nit_proveedor: nit, razon_social: name, telefono: phone, email };
@@ -119,10 +140,10 @@ export default function SuppliersScreen() {
       />
 
       <AdminCrudModal visible={showForm} title={editingId ? 'Editar proveedor' : 'Nuevo proveedor'} onClose={() => setShowForm(false)}>
-        <Field label="Razón Social" value={name} onChangeText={setName} placeholder="Nombre del proveedor" />
-        <Field label="NIT" value={nit} onChangeText={setNit} placeholder="Ej: 900123456-7" />
-        <Field label="Email" value={email} onChangeText={setEmail} placeholder="correo@proveedor.com" keyboardType="email-address" autoCapitalize="none" />
-        <Field label="Teléfono" value={phone} onChangeText={setPhone} placeholder="10 dígitos" keyboardType="numeric" />
+        <Field label="Razón Social" value={name} onChangeText={setName} placeholder="Nombre del proveedor" error={errores.name} />
+        <Field label="NIT" value={nit} onChangeText={setNit} placeholder="Ej: 900123456-7" autoCapitalize="none" error={errores.nit} />
+        <Field label="Email" value={email} onChangeText={setEmail} placeholder="correo@proveedor.com" keyboardType="email-address" autoCapitalize="none" error={errores.email} />
+        <Field label="Teléfono" value={phone} onChangeText={setPhone} placeholder="10 dígitos" keyboardType="numeric" maxLength={10} error={errores.phone} />
         <ThemedView style={styles.modalActions}>
           <Pressable onPress={() => setShowForm(false)}><ThemedText type="small" style={{ color: dash.textMuted }}>Cancelar</ThemedText></Pressable>
           <Button label={editingId ? 'Actualizar' : 'Guardar'} pill loading={isSaving} disabled={!name || !nit || !email || !phone} onPress={handleSave} />

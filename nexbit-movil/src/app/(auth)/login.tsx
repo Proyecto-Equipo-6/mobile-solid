@@ -12,6 +12,7 @@ import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Brand, Radius, Spacing } from '@/shared/constants/theme';
 import { useTheme } from '@/shared/hooks/use-theme';
+import { mensajeEmail, validarEmail, validarNombre } from '@/shared/utils/validacion';
 
 export default function LoginScreen() {
   const insets = useSafeAreaInsets();
@@ -19,16 +20,28 @@ export default function LoginScreen() {
   const theme = useTheme();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [errores, setErrores] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const submittingRef = useRef(false);
+
+  function validarCampos(): boolean {
+    const nuevos: Record<string, string> = {};
+    if (!validarEmail(email)) nuevos.email = mensajeEmail();
+    if (!validarNombre(password)) nuevos.password = 'La contraseña es obligatoria';
+    setErrores(nuevos);
+    return Object.keys(nuevos).length === 0;
+  }
 
   async function handleSubmit() {
     if (submittingRef.current) {
       return;
     }
-    submittingRef.current = true;
     setError(null);
+    if (!validarCampos()) {
+      return;
+    }
+    submittingRef.current = true;
     setSubmitting(true);
     try {
       await signIn(email, password);
@@ -64,6 +77,7 @@ export default function LoginScreen() {
             autoCapitalize="none"
             keyboardType="email-address"
             required
+            error={errores.email}
           />
           <Field
             label="Contraseña"
@@ -72,6 +86,7 @@ export default function LoginScreen() {
             placeholder="Tu contraseña"
             secureTextEntry
             required
+            error={errores.password}
           />
 
           <Button label="Iniciar sesión" fullWidth loading={submitting} onPress={handleSubmit} />

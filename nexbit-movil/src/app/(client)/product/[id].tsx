@@ -59,6 +59,7 @@ export default function ProductDetailScreen() {
       name: product.name,
       price: product.price,
       imageUrl: product.imageUrl,
+      stock: product.stock,
     });
     setAdded(true);
   }
