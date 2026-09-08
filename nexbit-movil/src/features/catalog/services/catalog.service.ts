@@ -21,7 +21,9 @@ function extractProductsArray(data: unknown): BackendProducto[] {
 }
 
 export async function listProducts(): Promise<Product[]> {
-  const data = await api.get<BackendProducto[] | { items: BackendProducto[] } | { productos: BackendProducto[] }>('/productos/publico');
+  const data = await api.get<BackendProducto[] | { items: BackendProducto[] } | { productos: BackendProducto[] }>('/productos/publico', {
+    limite: 1000,
+  });
   const productosList = extractProductsArray(data);
 
   return productosList.map(mapProductoToProduct);
@@ -46,7 +48,7 @@ export async function listCategories(): Promise<Category[]> {
   >('/categorias');
   const categoriasList = extractCategoriesArray(data);
   return categoriasList
-    .filter((categoria) => Number(categoria.estado) === 1)
+    .filter((categoria) => categoria.estado === undefined || Number(categoria.estado) === 1)
     .map((categoria) => ({
       id: String(categoria.id_categoria),
       name: categoria.nombre,

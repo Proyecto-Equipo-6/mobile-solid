@@ -2,8 +2,10 @@ import { Ionicons } from '@expo/vector-icons';
 import type { ComponentProps } from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import type { ColorValue } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 
 import { useAuth } from '@/features/auth/hooks/useAuth';
+import { useCart } from '@/features/cart/hooks/useCart';
 import { ROLE_HOME } from '@/features/auth/types/auth.types';
 import { useTheme } from '@/shared/hooks/use-theme';
 
@@ -13,14 +15,31 @@ function TabBarIcon({ name, color, size }: Readonly<{ name: IoniconsName; color:
   return <Ionicons name={name} size={size} color={color} />;
 }
 
-function makeTabBarIcon(name: IoniconsName) {
+function CartTabIcon({ color, size, count }: Readonly<{ color: ColorValue; size: number; count: number }>) {
+  return (
+    <View style={styles.iconWrap}>
+      <Ionicons name="cart-outline" size={size} color={color} />
+      {count > 0 && (
+        <View style={styles.badge}>
+          <Text style={styles.badgeText}>{count > 99 ? '99+' : count}</Text>
+        </View>
+      )}
+    </View>
+  );
+}
+
+function makeTabBarIcon(name: IoniconsName, badgeCount?: number) {
   return function TabBarIconWrapper(props: { focused: boolean; color: ColorValue; size: number }) {
+    if (name === 'cart-outline' && badgeCount !== undefined) {
+      return <CartTabIcon color={props.color} size={props.size} count={badgeCount} />;
+    }
     return <TabBarIcon name={name} color={props.color} size={props.size} />;
   };
 }
 
 export default function ClientLayout() {
   const { role, isAuthenticated, isLoading } = useAuth();
+  const { count } = useCart();
   const theme = useTheme();
 
   if (isLoading) {
@@ -66,7 +85,7 @@ export default function ClientLayout() {
         name="cart"
         options={{
           title: 'Carrito',
-          tabBarIcon: makeTabBarIcon('cart-outline'),
+          tabBarIcon: makeTabBarIcon('cart-outline', count),
         }}
       />
       <Tabs.Screen
@@ -94,3 +113,30 @@ export default function ClientLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  iconWrap: {
+    width: 30,
+    height: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  badge: {
+    position: 'absolute',
+    top: -2,
+    right: -6,
+    minWidth: 16,
+    height: 16,
+    borderRadius: 8,
+    backgroundColor: '#ef4444',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 3,
+  },
+  badgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '700',
+    lineHeight: 12,
+  },
+});

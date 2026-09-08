@@ -9,7 +9,9 @@ export async function getMyProfile(): Promise<User> {
 }
 
 export async function updateMyProfile(
-  payload: Partial<Pick<RegisterPayload, 'telefono' | 'direccion' | 'nombre_apellido'>>,
+  payload: Partial<Pick<RegisterPayload, 'telefono' | 'direccion' | 'nombre_apellido'>> & {
+    password?: string;
+  },
 ): Promise<User> {
   const usuario = await api.put<BackendUsuario>('/users/perfil', payload);
   return mapUsuarioToUser(usuario);

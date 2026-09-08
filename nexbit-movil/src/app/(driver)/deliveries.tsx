@@ -125,8 +125,14 @@ export default function DeliveriesScreen() {
 
   async function handleConfirm() {
     if (!activeOrder || isConfirming || isUploading) return;
-    if (selectedStatus === 'ENTREGADO' && !comprobanteUrl) return;
-    if (selectedStatus === 'NO_ENTREGADO' && observation.trim().length === 0) return;
+    if (selectedStatus === 'ENTREGADO' && !comprobanteUrl) {
+      Alert.alert('Comprobante requerido', 'Debes subir la foto del comprobante para confirmar la entrega.');
+      return;
+    }
+    if (selectedStatus === 'NO_ENTREGADO' && observation.trim().length === 0) {
+      Alert.alert('Motivo requerido', 'Debes escribir el motivo de la entrega no realizada.');
+      return;
+    }
 
     setIsConfirming(true);
     try {
@@ -138,7 +144,8 @@ export default function DeliveriesScreen() {
       resetActiveState();
       setActiveOrder(null);
       reload();
-    } catch {
+    } catch (e) {
+      Alert.alert('No se pudo confirmar', e instanceof Error ? e.message : 'Ocurrió un error al confirmar la entrega. Intenta de nuevo.');
     } finally {
       setIsConfirming(false);
     }

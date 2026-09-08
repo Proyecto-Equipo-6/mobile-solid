@@ -1,7 +1,9 @@
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { useState } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
+import { useCart } from '@/features/cart/hooks/useCart';
 import type { Product } from '@/features/catalog/types/catalog.types';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
@@ -17,6 +19,20 @@ type ProductCardProps = Readonly<{
 export function ProductCard({ product, categoryName }: ProductCardProps) {
   const router = useRouter();
   const theme = useTheme();
+  const { addItem } = useCart();
+  const [added, setAdded] = useState(false);
+
+  function handleAdd() {
+    addItem({
+      productId: product.id,
+      name: product.name,
+      price: product.price,
+      imageUrl: product.imageUrl,
+      stock: product.stock,
+    });
+    setAdded(true);
+    setTimeout(() => setAdded(false), 2000);
+  }
 
   return (
     <Pressable onPress={() => router.push(`/product/${product.id}`)} style={({ pressed }) => [pressed && styles.pressed]}>
@@ -57,10 +73,29 @@ export function ProductCard({ product, categoryName }: ProductCardProps) {
           <ThemedText type="smallBold" style={[styles.precio, { color: theme.accent }]}>
             {formatCurrency(product.price)}
           </ThemedText>
-          <ThemedView style={[styles.boton, { backgroundColor: theme.accent }]}>
-            <ThemedText type="smallBold" style={{ color: theme.sobreAccent }}>
-              Ver producto
+
+          {added && (
+            <ThemedText type="smallBold" themeColor="success" style={styles.aviso}>
+              ✓ Agregado al carrito
             </ThemedText>
+          )}
+
+          <ThemedView style={styles.acciones}>
+            <Pressable
+              onPress={() => router.push(`/product/${product.id}`)}
+              style={({ pressed }) => [styles.boton, { backgroundColor: theme.backgroundElement, borderColor: theme.border }, pressed && styles.pressed]}>
+              <ThemedText type="smallBold" themeColor="text">
+                Ver
+              </ThemedText>
+            </Pressable>
+            <Pressable
+              onPress={handleAdd}
+              disabled={!product.available}
+              style={({ pressed }) => [styles.boton, styles.botonAgregar, { backgroundColor: theme.accent }, (!product.available || pressed) && styles.pressed]}>
+              <ThemedText type="smallBold" style={{ color: theme.sobreAccent }}>
+                {added ? '✓' : 'Añadir'}
+              </ThemedText>
+            </Pressable>
           </ThemedView>
         </ThemedView>
       </ThemedView>
@@ -118,10 +153,23 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: '700',
   },
-  boton: {
+  aviso: {
+    fontSize: 12,
+  },
+  acciones: {
     marginTop: Spacing.one,
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  boton: {
+    flex: 1,
     paddingVertical: 10,
     borderRadius: Radius.control,
     alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+  },
+  botonAgregar: {
+    borderColor: 'transparent',
   },
 });

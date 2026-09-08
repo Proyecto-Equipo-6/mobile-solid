@@ -33,6 +33,7 @@ export type Product = {
   imageUrl?: string;
   categoryId?: string;
   categoryName?: string;
+  supplierId?: string;
   available: boolean;
   createdAt: string;
 };
@@ -49,6 +50,8 @@ export function mapProductoToProduct(producto: BackendProducto): Product {
     categoryId:
       producto.id_categoria !== undefined ? String(producto.id_categoria) : undefined,
     categoryName: producto.categoria,
+    supplierId:
+      producto.id_proveedor !== undefined ? String(producto.id_proveedor) : undefined,
     available: Number(producto.estado) === 1,
     createdAt: producto.fecha_creacion ?? producto.fecha_actualizacion ?? '',
   };

@@ -69,7 +69,8 @@ export default function ProductsScreen() {
       price: product.price,
       sku: product.sku,
       categoryId: product.categoryId ?? '',
-      supplierId: '',
+      supplierId: product.supplierId ?? '',
+      stock: product.stock,
       available: product.available,
       imageUrl: product.imageUrl,
     };
@@ -89,6 +90,7 @@ export default function ProductsScreen() {
           onSubmit={handleSubmit}
           onCancel={handleCancel}
           initialData={editingProduct ? buildInitialData(editingProduct) : undefined}
+          products={products}
         />
       )}
 

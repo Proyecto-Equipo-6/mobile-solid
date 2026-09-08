@@ -1,13 +1,14 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Image, Pressable, StyleSheet, TextInput } from 'react-native';
 
 import {
   listProveedores,
   uploadProductImage,
+  listAllCategories,
 } from '@/features/admin-panel/services/admin.service';
-import { listCategories } from '@/features/catalog/services/catalog.service';
-import type { CreateProductPayload } from '@/features/catalog/types/catalog.types';
+import type { CreateProductPayload, Product } from '@/features/catalog/types/catalog.types';
 import { Button } from '@/shared/components/button';
+import { SelectField, type SelectOption } from '@/shared/components/select-field';
 import { ThemedText } from '@/shared/components/themed-text';
 import { ThemedView } from '@/shared/components/themed-view';
 import { Spacing } from '@/shared/constants/theme';
@@ -20,13 +21,41 @@ type ProductFormProps = Readonly<{
   onSubmit: (payload: CreateProductPayload) => Promise<unknown>;
   onCancel: () => void;
   initialData?: CreateProductPayload;
+  products?: Product[];
 }>;
 
-export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProps) {
+const MAX_TAMANO_IMAGEN_PRODUCTO = 5 * 1024 * 1024;
+
+function normalizarTexto(texto = ''): string {
+  return texto
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .toUpperCase();
+}
+
+function generarSku(nombreCategoria: string, nombreProducto: string, productos: Product[] = []): string {
+  const prefijoCategoria = normalizarTexto(nombreCategoria).slice(0, 3);
+  const prefijoNombre = normalizarTexto(nombreProducto).slice(0, 4);
+  if (!prefijoCategoria || !prefijoNombre) {
+    return '';
+  }
+  const lista = productos;
+  let numero = lista.length + 1;
+  let sku = `${prefijoCategoria}-${prefijoNombre}-${numero}`;
+  while (lista.some((producto) => producto.sku === sku)) {
+    numero += 1;
+    sku = `${prefijoCategoria}-${prefijoNombre}-${numero}`;
+  }
+  return sku;
+}
+
+export function ProductForm({ onSubmit, onCancel, initialData, products = [] }: ProductFormProps) {
   const dash = useDashTheme();
   const [name, setName] = useState(initialData?.name ?? '');
   const [description, setDescription] = useState(initialData?.description ?? '');
   const [sku, setSku] = useState(initialData?.sku ?? '');
+  const [skuTouched, setSkuTouched] = useState(Boolean(initialData));
   const [price, setPrice] = useState(initialData?.price ? String(initialData.price) : '');
   const [stock, setStock] = useState(initialData?.stock !== undefined ? String(initialData.stock) : '');
   const [categoryId, setCategoryId] = useState(initialData?.categoryId ?? '');
@@ -40,10 +69,19 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
   const [previewUri, setPreviewUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [imageError, setImageError] = useState<string | null>(null);
+  const [isLoadingOpciones, setIsLoadingOpciones] = useState(true);
+  const [opcionesError, setOpcionesError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [opcionesReloadKey, setOpcionesReloadKey] = useState(0);
 
   useEffect(() => {
-    Promise.all([listCategories(), listProveedores()])
-      .then(([categorias, proveedores]) => {
+    let active = true;
+    (async () => {
+      try {
+        const [categorias, proveedores] = await Promise.all([listAllCategories(), listProveedores()]);
+        if (!active) {
+          return;
+        }
         setCategories(categorias.map((categoria) => ({ id: categoria.id, name: categoria.name })));
         setSuppliers(
           proveedores.map((proveedor) => ({
@@ -51,17 +89,55 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
             name: proveedor.razon_social,
           })),
         );
-      })
-      .catch(() => {
+        setOpcionesError(null);
+      } catch {
+        if (!active) {
+          return;
+        }
         setCategories([]);
         setSuppliers([]);
-      });
+        setOpcionesError('No se pudieron cargar las categorías/proveedores. Revisa tu conexión.');
+      } finally {
+        if (active) {
+          setIsLoadingOpciones(false);
+        }
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [opcionesReloadKey]);
+
+  const reintentarOpciones = useCallback(() => {
+    setIsLoadingOpciones(true);
+    setOpcionesError(null);
+    setOpcionesReloadKey((key) => key + 1);
   }, []);
+
+  const autoSku = useMemo(() => {
+    if (initialData || skuTouched) {
+      return '';
+    }
+    const categoria = categories.find((item) => item.id === categoryId);
+    return generarSku(categoria ? categoria.name : '', name, products);
+  }, [initialData, skuTouched, name, categoryId, categories, products]);
+
+  const skuActual = skuTouched ? sku : autoSku || sku;
+
+  const categoriaOpciones: SelectOption[] = categories.map((categoria) => ({
+    label: categoria.name,
+    value: categoria.id,
+  }));
+
+  const proveedorOpciones: SelectOption[] = suppliers.map((proveedor) => ({
+    label: proveedor.name,
+    value: proveedor.id,
+  }));
 
   function validarCampos(): boolean {
     const nuevos: Record<string, string> = {};
     if (!name.trim()) nuevos.name = 'El nombre es obligatorio';
-    if (!sku.trim()) nuevos.sku = 'El SKU es obligatorio';
+    if (!skuActual.trim()) nuevos.sku = 'El SKU es obligatorio';
     if (!validarPrecio(Number(price))) nuevos.price = 'El precio debe ser un número mayor a 0';
     if (!validarStock(Number(stock))) nuevos.stock = 'El stock debe ser un número mayor o igual a 0';
     if (!categoryId) nuevos.categoryId = 'Selecciona una categoría';
@@ -74,7 +150,9 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
     if (isSubmitting) {
       return;
     }
+    setSubmitError(null);
     if (!validarCampos()) {
+      setSubmitError('Revisa los campos marcados en rojo.');
       return;
     }
     setIsSubmitting(true);
@@ -82,7 +160,7 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
       await onSubmit({
         name: name.trim(),
         description,
-        sku: sku.trim(),
+        sku: skuActual.trim(),
         price: Number(price),
         stock: Number(stock),
         categoryId,
@@ -91,6 +169,8 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         imageUrl: imageUrl ?? undefined,
       });
       onCancel();
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : 'No se pudo guardar el producto. Intenta de nuevo.');
     } finally {
       setIsSubmitting(false);
     }
@@ -104,6 +184,10 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
     try {
       const seleccionada = await pickImage('library');
       if (!seleccionada) {
+        return;
+      }
+      if (seleccionada.fileSize > MAX_TAMANO_IMAGEN_PRODUCTO) {
+        setImageError('La imagen supera el tamaño máximo permitido (5 MB). Intenta con una más liviana.');
         return;
       }
       setPreviewUri(seleccionada.uri);
@@ -157,8 +241,12 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         <ThemedText type="small" style={styles.errorTexto}>{errores.name}</ThemedText>
       ) : null}
       <TextInput
-        value={sku}
-        onChangeText={setSku}
+        value={skuActual}
+        onChangeText={(texto) => {
+          setSkuTouched(true);
+          setSku(texto);
+        }}
+        editable={isEditing}
         placeholder="SKU (ej: NEX-001)"
         placeholderTextColor={dash.textMuted}
         autoCapitalize="characters"
@@ -166,6 +254,11 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
       />
       {errores.sku ? (
         <ThemedText type="small" style={styles.errorTexto}>{errores.sku}</ThemedText>
+      ) : null}
+      {!skuTouched && !initialData ? (
+        <ThemedText type="small" style={{ color: dash.textMuted, fontSize: 11 }}>
+          SKU generado automáticamente.
+        </ThemedText>
       ) : null}
       <TextInput
         value={description}
@@ -198,61 +291,44 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
         <ThemedText type="small" style={styles.errorTexto}>{errores.stock}</ThemedText>
       ) : null}
 
-      <ThemedText type="smallBold" style={{ color: dash.textSecondary, fontSize: 12 }}>
-        Categoría
-      </ThemedText>
-      <ThemedView style={styles.chips}>
-        {categories.map((category) => {
-          const selected = categoryId === category.id;
-          return (
-            <Pressable key={category.id} onPress={() => setCategoryId(category.id)}>
-              <ThemedView
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: selected ? dash.accent : dash.cardHover,
-                    borderColor: selected ? dash.accent : dash.border,
-                    borderWidth: 1,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: selected ? dash.sobreAccent : dash.textSecondary, fontSize: 12 }}>
-                  {category.name}
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          );
-        })}
-      </ThemedView>
+      {opcionesError ? (
+        <ThemedView style={styles.opcionesError}>
+          <ThemedText type="small" style={{ color: '#f87171' }}>
+            {opcionesError}
+          </ThemedText>
+          <Pressable onPress={reintentarOpciones} disabled={isLoadingOpciones}>
+            <ThemedText type="small" style={{ color: dash.accent }}>
+              Reintentar
+            </ThemedText>
+          </Pressable>
+        </ThemedView>
+      ) : null}
 
-      <ThemedText type="smallBold" style={{ color: dash.textSecondary, fontSize: 12 }}>
-        Proveedor
-      </ThemedText>
-      <ThemedView style={styles.chips}>
-        {suppliers.map((supplier) => {
-          const selected = supplierId === supplier.id;
-          return (
-            <Pressable key={supplier.id} onPress={() => setSupplierId(supplier.id)}>
-              <ThemedView
-                style={[
-                  styles.chip,
-                  {
-                    backgroundColor: selected ? dash.accent : dash.cardHover,
-                    borderColor: selected ? dash.accent : dash.border,
-                    borderWidth: 1,
-                  },
-                ]}>
-                <ThemedText
-                  type="smallBold"
-                  style={{ color: selected ? dash.sobreAccent : dash.textSecondary, fontSize: 12 }}>
-                  {supplier.name}
-                </ThemedText>
-              </ThemedView>
-            </Pressable>
-          );
-        })}
-      </ThemedView>
+      <SelectField
+        label="Categoría"
+        options={categoriaOpciones}
+        value={categoryId}
+        onChange={setCategoryId}
+        placeholder="Selecciona una categoría"
+        loading={isLoadingOpciones}
+        error={errores.categoryId}
+      />
+      {errores.categoryId ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.categoryId}</ThemedText>
+      ) : null}
+
+      <SelectField
+        label="Proveedor"
+        options={proveedorOpciones}
+        value={supplierId}
+        onChange={setSupplierId}
+        placeholder="Selecciona un proveedor"
+        loading={isLoadingOpciones}
+        error={errores.supplierId}
+      />
+      {errores.supplierId ? (
+        <ThemedText type="small" style={styles.errorTexto}>{errores.supplierId}</ThemedText>
+      ) : null}
 
       <ThemedText type="smallBold" style={{ color: dash.textSecondary, fontSize: 12 }}>
         Imagen del producto
@@ -292,6 +368,12 @@ export function ProductForm({ onSubmit, onCancel, initialData }: ProductFormProp
           {available ? 'Disponible para la venta' : 'Oculto (no disponible)'}
         </ThemedText>
       </Pressable>
+
+      {submitError ? (
+        <ThemedText type="small" style={{ color: '#f87171' }}>
+          {submitError}
+        </ThemedText>
+      ) : null}
 
       <ThemedView style={styles.actions}>
         <Pressable onPress={onCancel} disabled={isSubmitting}>
@@ -335,19 +417,16 @@ const styles = StyleSheet.create({
     color: '#f87171',
     marginTop: -Spacing.one,
   },
+  opcionesError: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+    paddingVertical: Spacing.one,
+  },
   textarea: {
     minHeight: 60,
     textAlignVertical: 'top',
-  },
-  chips: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  chip: {
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    borderRadius: 999,
   },
   toggle: {
     flexDirection: 'row',

@@ -23,6 +23,8 @@ export default function ProfileScreen() {
   const [email, setEmail] = useState('');
   const [telefono, setTelefono] = useState('');
   const [direccion, setDireccion] = useState('');
+  const [password, setPassword] = useState('');
+  const [iniciales, setIniciales] = useState<{ nombre: string; telefono: string; direccion: string } | null>(null);
   const [errores, setErrores] = useState<Record<string, string>>({});
   const [isSaving, setIsSaving] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -39,6 +41,11 @@ export default function ProfileScreen() {
           setEmail(perfil.email);
           setTelefono(perfil.phone ?? '');
           setDireccion(perfil.direccion ?? '');
+          setIniciales({
+            nombre: perfil.name,
+            telefono: perfil.phone ?? '',
+            direccion: perfil.direccion ?? '',
+          });
         }
       })
       .catch(() => {
@@ -47,6 +54,11 @@ export default function ProfileScreen() {
           setEmail(user.email);
           setTelefono(user.phone ?? '');
           setDireccion(user.direccion ?? '');
+          setIniciales({
+            nombre: user.name,
+            telefono: user.phone ?? '',
+            direccion: user.direccion ?? '',
+          });
         }
       })
       .finally(() => {
@@ -59,11 +71,25 @@ export default function ProfileScreen() {
     };
   }, [user]);
 
+  function hayCambios(): boolean {
+    if (!iniciales) {
+      return true;
+    }
+    return (
+      nombre.trim() !== iniciales.nombre ||
+      telefono.trim() !== iniciales.telefono ||
+      direccion.trim() !== iniciales.direccion
+    );
+  }
+
   function validarCampos(): boolean {
     const nuevos: Record<string, string> = {};
     if (!validarNombre(nombre)) nuevos.nombre = 'El nombre es obligatorio';
     if (!validarTelefono(telefono)) nuevos.telefono = mensajeTelefono();
     if (!validarNombre(direccion)) nuevos.direccion = 'La dirección es obligatoria';
+    if (hayCambios() && !password) {
+      nuevos.password = 'Ingresa tu contraseña actual para guardar los cambios';
+    }
     setErrores(nuevos);
     return Object.keys(nuevos).length === 0;
   }
@@ -74,6 +100,10 @@ export default function ProfileScreen() {
     }
     setMessage(null);
     setError(null);
+    if (!hayCambios()) {
+      setMessage('No hay cambios para guardar.');
+      return;
+    }
     if (!validarCampos()) {
       return;
     }
@@ -83,7 +113,10 @@ export default function ProfileScreen() {
         nombre_apellido: nombre,
         telefono,
         direccion,
+        password,
       });
+      setPassword('');
+      setIniciales({ nombre, telefono, direccion });
       setMessage('Perfil actualizado correctamente.');
     } catch (e) {
       setError(e instanceof Error ? e.message : 'No se pudo actualizar el perfil');
@@ -128,6 +161,18 @@ export default function ProfileScreen() {
           placeholder="Ej: Calle 10 # 5-20, Medellín"
           error={errores.direccion}
         />
+
+        {hayCambios() && (
+          <Field
+            label="Contraseña actual"
+            value={password}
+            onChangeText={setPassword}
+            placeholder="Contraseña para confirmar los cambios"
+            secureTextEntry
+            autoCapitalize="none"
+            error={errores.password}
+          />
+        )}
 
         <Button label="Guardar cambios" fullWidth loading={isSaving || isLoading} onPress={handleSave} />
       </ThemedView>

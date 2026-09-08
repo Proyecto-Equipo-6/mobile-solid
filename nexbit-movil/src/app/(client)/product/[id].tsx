@@ -1,5 +1,5 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -23,6 +23,7 @@ export default function ProductDetailScreen() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [added, setAdded] = useState(false);
+  const addedTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (!id) {
@@ -62,7 +63,19 @@ export default function ProductDetailScreen() {
       stock: product.stock,
     });
     setAdded(true);
+    if (addedTimer.current) {
+      clearTimeout(addedTimer.current);
+    }
+    addedTimer.current = setTimeout(() => setAdded(false), 3000);
   }
+
+  useEffect(() => {
+    return () => {
+      if (addedTimer.current) {
+        clearTimeout(addedTimer.current);
+      }
+    };
+  }, []);
 
   if (isLoading) {
     return (
